@@ -235,6 +235,14 @@
 .gantt-row .gr-label .gr-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .gantt-row .gr-label .gr-proj{font-size:10px;color:var(--text-faint);white-space:nowrap;}
 .gantt-row .gr-timeline{position:relative;overflow:hidden;}
+/* ══ Forcer texte normal dans le Gantt (pas de rouge) ══ */
+.gantt-row .gr-name,
+.gantt-row .gr-proj {
+  color: var(--text) !important;
+}
+
+
+
 
 /* Barre Gantt */
 .gantt-bar{position:absolute;top:6px;bottom:6px;border-radius:3px;display:flex;align-items:center;padding:0 6px;font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;transition:opacity .15s;}
@@ -1402,11 +1410,14 @@ function drawGantt(){
     return buildGanttRow(a, startPct, widthPct, totalDays, days, showToday, todayPct);
   }).join('');
 
-  // ── HTML lignes congés / astreintes / formations (toujours affichées, indépendamment du filtre projet)
-  const visibleAbsences = planningAbsences.filter(a=>{
-    const start = a.dateDebut || a.echeance, end = a.echeance || a.dateDebut;
-    return !(end < viewStart || start > viewEnd);
-  });
+// ── HTML lignes congés / astreintes / formations (toujours affichées, indépendamment du filtre projet)
+const visibleAbsences = planningAbsences.filter(a=>{
+  const start = a.dateDebut || a.echeance;
+  const end   = a.echeance  || a.dateDebut;
+  // Vérifier que les dates existent avant de comparer
+  if(!start || !end) return false;
+  return !(end < viewStart || start > viewEnd);
+});
   const absencesRowsHtml = visibleAbsences.map(a=>{
     const start = a.dateDebut || a.echeance, end = a.echeance || a.dateDebut;
     const clampStart = start < viewStart ? viewStart : start;
@@ -1459,7 +1470,7 @@ function drawGantt(){
 function buildGanttRow(a, startPct, widthPct, totalDays, days, showToday, todayPct){
   const color    = STATUT_BAR_COLOR[a.statut] || '#5D7480';
   const gridTpl  = `${GANTT_LABEL_W}px 1fr`;
-  const overdue  = a.echeance && a.statut!=='Terminé' && a.echeance < new Date();
+  // const overdue  = a.echeance && a.statut!=='Terminé' && a.echeance < new Date(); ← SUPPRIMÉ
 
   // Colonnes weekend en fond
   const weekendCols = days.map((d,i)=>{
@@ -1487,7 +1498,7 @@ function buildGanttRow(a, startPct, widthPct, totalDays, days, showToday, todayP
       <div class="gr-label" title="${esc(a.activite||'—')}">
         <span class="chip-dot" style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
         <div style="min-width:0;">
-          <div class="gr-name" style="${overdue?'color:var(--rouge)':''}">${esc(a.activite||'—')}</div>
+          <div class="gr-name">${esc(a.activite||'—')}</div>
           ${a.projet?`<div class="gr-proj">${esc(a.projet)}</div>`:''}
         </div>
       </div>
@@ -1611,9 +1622,21 @@ function renderRapportBody(act, absences){
     return { ...a, jours };
   }).sort((a,b) => b.jours - a.jours);
 
-  const conges = absences.filter(a => a.statut==='Congé' && !((a.echeance||a.dateDebut) < start || (a.dateDebut||a.echeance) > end));
+const conges = absences.filter(a => {
+  if(a.statut !== 'Congé') return false;
+  const aStart = a.dateDebut || a.echeance;
+  const aEnd   = a.echeance  || a.dateDebut;
+  if(!aStart || !aEnd) return false;
+  return !(aEnd < start || aStart > end);
+});
   const joursConges = conges.reduce((sum,a) => sum + overlapDays(a.dateDebut||a.echeance, a.echeance||a.dateDebut, start, end), 0);
-  const astreintesFormations = absences.filter(a => (a.statut==='Astreinte'||a.statut==='Formation') && !((a.echeance||a.dateDebut) < start || (a.dateDebut||a.echeance) > end));
+const astreintesFormations = absences.filter(a => {
+  if(a.statut!=='Astreinte' && a.statut!=='Formation') return false;
+  const aStart = a.dateDebut || a.echeance;
+  const aEnd   = a.echeance  || a.dateDebut;
+  if(!aStart || !aEnd) return false;
+  return !(aEnd < start || aStart > end);
+});
 
   const projetsTouches = new Set([...terminees, ...enCours].map(a=>a.projet).filter(Boolean)).size;
   const blocagesLongs = bloquees.filter(b => b.jours >= 30).length;
@@ -1629,7 +1652,7 @@ function renderRapportBody(act, absences){
       <div class="kpi accent-neutre"><div class="value">${joursConges}</div><div class="label">Jours de congé sur la période</div></div>
     </div>
 
-    <div class="panel">
+    <div class="panel" style="margin-bottom:18px;">
       <h2>Terminé sur la période</h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">${terminees.length} activité${terminees.length>1?'s':''}</p>
       ${terminees.length ? terminees.map(a => `
@@ -1640,7 +1663,7 @@ function renderRapportBody(act, absences){
         </div>`).join('') : '<div class="empty-note">Aucune activité clôturée sur la période.</div>'}
     </div>
 
-    <div class="panel">
+    <div class="panel" style="margin-bottom:18px;">
       <h2>En cours, en progression</h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Activités actives sur la période, même sans clôture</p>
       ${enCours.length ? enCours.map(a => `
@@ -1649,7 +1672,7 @@ function renderRapportBody(act, absences){
         </div>`).join('') : '<div class="empty-note">Aucune activité en cours sur la période.</div>'}
     </div>
 
-    <div class="panel">
+    <div class="panel" style="margin-bottom:18px;">
       <h2>Bloqué en dehors de vous <span style="color:var(--text-faint);font-weight:400;font-family:var(--font-body);font-size:12px;">${bloquees.length}</span></h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Situation actuelle, indépendamment de la période choisie</p>
       ${bloquees.length ? bloquees.map(a => {
@@ -1662,7 +1685,7 @@ function renderRapportBody(act, absences){
       }).join('') : '<div class="empty-note">Aucun blocage en cours.</div>'}
     </div>
 
-    <div class="panel">
+    <div class="panel" style="margin-bottom:18px;">
       <h2>Congés, astreintes et formations</h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Temps mobilisé en dehors du suivi de projet</p>
       <div class="rp-ticker-grid">
@@ -1678,7 +1701,7 @@ function renderRapportBody(act, absences){
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" style="margin-bottom:18px;">
       <h2>Contexte et commentaires</h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Ce que les chiffres ne montrent pas — à toi de le rédiger avant partage</p>
       <textarea class="rp-comment-box" id="rp-comment" placeholder="Ex : Ce trimestre a été en partie mobilisé par la gestion opérationnelle (astreintes, réunions GT IA). Les blocages en attente ne dépendent pas de moi.">${esc(savedComment)}</textarea>
