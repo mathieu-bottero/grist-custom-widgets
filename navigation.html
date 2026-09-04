@@ -5,120 +5,88 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 40px;
-      text-align: center;
-      background: #f5f5f5;
+      padding: 20px;
+      background: #f8f9fa;
     }
     #status {
-      font-size: 20px;
-      margin: 20px;
-      padding: 20px;
+      font-size: 18px;
+      padding: 15px;
       background: white;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      text-align: center;
     }
     .loading { color: #666; }
-    .success { color: #28a745; }
-    .error { color: #dc3545; }
+    .success { color: #28a745; font-weight: bold; }
+    .error { color: #dc3545; font-weight: bold; }
   </style>
 </head>
 <body>
-  <div id="status" class="loading">🔍 Initialisation...</div>
+  <div id="status" class="loading">🔍 Recherche de la station...</div>
   
   <script>
-    let stationsData = null;
-    
     grist.ready({
       requiredAccess: 'read table',
-      columns: [{name: 'code', optional: true}]
+      onEditOptions: function() {
+        // Options du widget si besoin
+      }
     });
     
-    // Charger les données au démarrage
-    async function loadAndRedirect() {
+    async function filterByCodeStation() {
       const statusEl = document.getElementById('status');
       
       try {
-        statusEl.textContent = '📥 Chargement des données...';
-        
-        // Charger toute la table stations
-        stationsData = await grist.docApi.fetchTable('stations');
-        
-        statusEl.textContent = '🔍 Récupération du code station...';
-        
-        // Essayer plusieurs méthodes pour récupérer le code
-        let codeStation = null;
-        
-        // Méthode 1: depuis l'URL parent
-        const urlParams = new URLSearchParams(window.parent.location.search);
-        codeStation = urlParams.get('code');
-        
-        // Méthode 2: depuis l'URL du widget
-        if (!codeStation) {
-          const widgetParams = new URLSearchParams(window.location.search);
-          codeStation = widgetParams.get('code');
-        }
-        
-        // Méthode 3: depuis le hash
-        if (!codeStation) {
-          const hash = window.location.hash;
-          const match = hash.match(/code=([^&]+)/);
-          if (match) codeStation = match[1];
-        }
-        
-        // Log pour debug
-        console.log('URL parent:', window.parent.location.href);
-        console.log('URL widget:', window.location.href);
-        console.log('Code trouvé:', codeStation);
+        // Récupérer le paramètre 'code' de l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeStation = urlParams.get('code');
         
         if (!codeStation) {
           statusEl.className = 'error';
-          statusEl.innerHTML = `
-            ❌ Aucun code de station trouvé<br>
-            <small>URL: ${window.parent.location.href}</small>
-          `;
+          statusEl.textContent = '❌ Aucun code fourni dans l\'URL';
           return;
         }
         
-        statusEl.textContent = `🔍 Recherche de la station : ${codeStation}`;
+        statusEl.textContent = `🔍 Recherche : ${codeStation}`;
         
-        // Chercher la station
-        const index = stationsData.code_station.findIndex(
+        // Charger la table stations
+        const tableData = await grist.docApi.fetchTable('stations');
+        
+        // Trouver l'index de la station
+        const index = tableData.code_station.findIndex(
           code => code && code.trim() === codeStation.trim()
         );
         
         if (index === -1) {
           statusEl.className = 'error';
-          statusEl.innerHTML = `
-            ❌ Station introuvable : ${codeStation}<br>
-            <small>${stationsData.code_station.length} stations dans la base</small>
-          `;
+          statusEl.textContent = `❌ Station introuvable : ${codeStation}`;
           return;
         }
         
-        const rowId = stationsData.id[index];
-        const nomStation = stationsData.nom_station_hydro[index];
+        const rowId = tableData.id[index];
+        const nomStation = tableData.nom_station_hydro[index];
+        
+        // Positionner le curseur sur cette ligne
+        await grist.setCursorPos({
+          rowId: rowId
+        });
         
         statusEl.className = 'success';
-        statusEl.textContent = `✅ Station trouvée : ${nomStation}`;
-        
-        // Rediriger vers la page fiche
-        setTimeout(() => {
-          window.parent.location.href = 
-            `https://grist.numerique.gouv.fr/o/docs/sK6Mx2g2fVvo/Document-sans-titre/p/10?stations=${rowId}`;
-        }, 800);
+        statusEl.textContent = `✅ ${nomStation} (${codeStation})`;
         
       } catch (error) {
         statusEl.className = 'error';
-        statusEl.innerHTML = `
-          ❌ Erreur : ${error.message}<br>
-          <small>${error.stack}</small>
-        `;
-        console.error('Erreur complète:', error);
+        statusEl.textContent = `❌ Erreur : ${error.message}`;
+        console.error('Erreur détaillée:', error);
       }
     }
     
-    // Lancer au chargement
-    setTimeout(loadAndRedirect, 500);
+    // Attendre que Grist soit prêt
+    grist.onRecords(function(records) {
+      // Widget connecté
+    });
+    
+    // Lancer le filtre après un court délai
+    setTimeout(filterByCodeStation, 800);
   </script>
 </body>
 </html>
