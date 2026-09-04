@@ -1417,6 +1417,11 @@ const visibleAbsences = planningAbsences.filter(a=>{
   // Vérifier que les dates existent avant de comparer
   if(!start || !end) return false;
   return !(end < viewStart || start > viewEnd);
+}).sort((a,b)=>{
+  // Tri chronologique par date de début
+  const dateA = a.dateDebut || a.echeance;
+  const dateB = b.dateDebut || b.echeance;
+  return dateA - dateB;
 });
   const absencesRowsHtml = visibleAbsences.map(a=>{
     const start = a.dateDebut || a.echeance, end = a.echeance || a.dateDebut;
