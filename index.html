@@ -1,0 +1,1718 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Suivi d'activité</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D1B24; --panel:#12222C; --panel-alt:#0F1D26;
+    --line:rgba(232,238,241,0.09); --line-strong:rgba(232,238,241,0.16);
+    --text:#E8EEF1; --text-muted:#8AA2AD; --text-faint:#5D7480;
+    --accent:#2E86AB;
+    --vert:#4CAF7D; --jaune:#E4B93B; --orange:#E08A3C; --rouge:#D64545;
+    --radius:6px;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'IBM Plex Sans',sans-serif;
+  }
+  
+  /* ── Thème clair ── */
+  body.theme-light{
+    --bg:#F0F4F7; --panel:#FFFFFF; --panel-alt:#E8EEF2;
+    --line:rgba(0,0,0,0.08); --line-strong:rgba(0,0,0,0.15);
+    --text:#1A2B35; --text-muted:#4A6572; --text-faint:#8AA2AD;
+    --accent:#2E86AB;
+    --vert:#2E7D52; --jaune:#B8860B; --orange:#C05A1A; --rouge:#B03030;
+  }
+  
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font-body);}
+  body{font-size:14px;line-height:1.45;}
+  #app{padding:20px 24px 32px;max-width:1400px;margin:0 auto;}
+
+  /* ── Nav ── */
+.topnav{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line-strong);margin-bottom:20px;flex-wrap:wrap;gap:10px;padding-bottom:4px;min-height:52px;}
+.topnav-left{display:flex;align-items:center;gap:12px;}
+.topnav-title{font-family:var(--font-display);font-weight:600;font-size:18px;color:var(--text);letter-spacing:.2px;}
+.avatar-circle{width:38px;height:38px;border-radius:50%;overflow:hidden;border:2px solid var(--accent);flex-shrink:0;}
+.avatar-circle img{width:100%;height:100%;object-fit:cover;}
+.tabs{display:flex;gap:26px;}
+  .tab-btn{background:transparent;border:none;color:var(--text-muted);font-family:var(--font-display);font-weight:500;font-size:14.5px;padding:12px 2px;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s;}
+  .tab-btn.active{color:var(--text);border-bottom-color:var(--accent);}
+  .tab-btn:hover{color:var(--text);}
+  .topnav-actions{display:flex;gap:6px;padding-bottom:8px;}
+  .topnav-actions button{background:transparent;border:1px solid var(--line-strong);color:var(--text-muted);font-family:var(--font-body);font-size:12px;padding:5px 10px;border-radius:var(--radius);cursor:pointer;}
+  .topnav-actions button:hover{border-color:var(--accent);color:var(--text);}
+
+  /* ── Header dashboard ── */
+  .header{position:relative;padding:0 0 22px;margin-bottom:22px;border-bottom:1px solid var(--line-strong);overflow:hidden;}
+  .header-inner{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+  .header .subtitle{color:var(--text-muted);font-size:13px;margin:0;}
+
+  /* ── KPI ── */
+  .kpi-strip{display:flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:22px;background:var(--panel);}
+  .kpi{flex:1;padding:14px 18px;border-right:1px solid var(--line);}
+  .kpi:last-child{border-right:none;}
+  .kpi .value{font-family:var(--font-display);font-size:28px;font-weight:600;line-height:1;}
+  .kpi .label{color:var(--text-muted);font-size:12.5px;margin-top:6px;}
+  .kpi.accent-vert .value{color:var(--vert);}
+  .kpi.accent-jaune .value{color:var(--jaune);}
+  .kpi.accent-orange .value{color:var(--orange);}
+  .kpi.accent-rouge .value{color:var(--rouge);}
+  .kpi.accent-neutre .value{color:var(--text);}
+
+  /* ── Grilles dashboard ── */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+  @media(max-width:880px){.grid{grid-template-columns:1fr;}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+  .panel h2{font-family:var(--font-display);font-size:14.5px;font-weight:600;margin:0 0 14px;color:var(--text);}
+  .panel h2 .count{color:var(--text-faint);font-weight:400;font-family:var(--font-body);font-size:12.5px;}
+  .subgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:620px){.subgrid{grid-template-columns:1fr;}}
+
+  /* ── Listes dashboard ── */
+  .log-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);}
+  .log-row:last-child{border-bottom:none;}
+  .log-row .title{font-size:13px;}
+  .log-row .sub{color:var(--text-faint);font-size:11.5px;margin-top:2px;}
+  .log-row .who{color:var(--text-muted);font-size:12px;white-space:nowrap;}
+  .log-row .days{font-family:var(--font-display);font-weight:600;font-size:13px;min-width:56px;text-align:right;padding:3px 8px;border-radius:4px;}
+  .days.vert{color:var(--vert);background:rgba(76,175,125,.1);}
+  .days.jaune{color:var(--jaune);background:rgba(228,185,59,.1);}
+  .days.orange{color:var(--orange);background:rgba(224,138,60,.1);}
+  .days.rouge{color:var(--rouge);background:rgba(214,69,69,.1);}
+  .empty-note{color:var(--text-faint);font-size:12.5px;padding:6px 0;}
+
+  /* ── Projets barres ── */
+  .proj-row{padding:8px 0;}
+  .proj-row .top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
+  .proj-row .top .name{color:var(--text);}
+  .proj-row .top .pct{color:var(--text-muted);font-family:var(--font-display);}
+  .proj-bar-track{height:6px;background:var(--panel-alt);border-radius:3px;overflow:hidden;border:1px solid var(--line);}
+  .proj-bar-fill{height:100%;border-radius:3px;}
+  .bar-row{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center;padding:7px 0;}
+  .bar-row .name{font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{height:10px;background:var(--panel-alt);border-radius:3px;overflow:hidden;border:1px solid var(--line);}
+  .bar-fill{height:100%;background:var(--accent);border-radius:3px;}
+  .bar-val{font-family:var(--font-display);font-size:12px;color:var(--text-muted);text-align:right;}
+
+  /* ── Donut ── */
+  .donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+  .legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--text-muted);}
+  .legend .row{display:flex;align-items:center;gap:8px;}
+  .legend i{width:9px;height:9px;border-radius:2px;display:inline-block;flex-shrink:0;}
+  .legend .n{color:var(--text);font-family:var(--font-display);margin-left:auto;padding-left:14px;}
+
+  /* ── Ticker ── */
+  .ticker{display:flex;gap:18px;margin-top:18px;flex-wrap:wrap;}
+  .ticker .item{flex:1;min-width:220px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;}
+  .ticker .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .ticker .item .t-title{font-size:12.5px;color:var(--text-muted);margin-bottom:2px;}
+  .ticker .item .t-value{font-size:13.5px;}
+
+  /* ── Divers ── */
+  .loading,.error{padding:40px 20px;color:var(--text-muted);font-size:13.5px;}
+  .error{color:var(--rouge);}
+
+  /* ════════════════════════════════════════
+     VUE ACTIVITÉS / KANBAN
+  ════════════════════════════════════════ */
+  .act-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+  .act-toolbar-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .act-toolbar h1{font-family:var(--font-display);font-weight:600;font-size:20px;margin:0;}
+
+  .act-select{background:var(--panel-alt);border:1px solid var(--line-strong);color:var(--text);font-family:var(--font-body);font-size:13px;padding:7px 10px;border-radius:4px;min-width:200px;}
+
+  .act-toggle{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-muted);cursor:pointer;user-select:none;white-space:nowrap;}
+  .act-toggle input{accent-color:var(--accent);}
+
+  .btn-add-act{background:var(--accent);border:none;color:#fff;font-family:var(--font-body);font-weight:500;font-size:13px;padding:7px 14px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .btn-add-act:hover{opacity:.88;}
+
+  /* Kanban board */
+  .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start;}
+  @media(max-width:900px){.kanban{grid-template-columns:1fr 1fr;}}
+  @media(max-width:560px){.kanban{grid-template-columns:1fr;}}
+
+  .kanban-col{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px;min-height:80px;transition:background .15s;}
+  .kanban-col.drag-over{background:#162530;border-color:var(--accent);}
+
+  .kanban-col-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+  .kanban-col-head .col-title{font-family:var(--font-display);font-size:13px;display:flex;align-items:center;gap:7px;}
+  .kanban-col-head .col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .kanban-col-head .col-count{color:var(--text-faint);font-family:var(--font-body);font-size:12px;}
+
+  /* Bouton + dans l'en-tête colonne */
+  .col-add-btn{background:transparent;border:none;color:var(--text-faint);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;border-radius:3px;}
+  .col-add-btn:hover{color:var(--text);background:var(--line-strong);}
+
+  /* Card */
+  .kcard{background:var(--panel-alt);border:1px solid var(--line);border-left:3px solid var(--text-faint);border-radius:4px;padding:9px 11px;margin-bottom:8px;cursor:grab;transition:opacity .15s,box-shadow .15s;user-select:none;}
+  .kcard:active{cursor:grabbing;}
+  .kcard.dragging{opacity:.4;}
+  .kcard.prio-haute{border-left-color:var(--orange);}
+  .kcard .kc-title{font-size:12.5px;line-height:1.35;margin-bottom:6px;}
+  .kcard .kc-meta{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-muted);}
+  .kcard .kc-echeance.overdue{color:var(--rouge);}
+  .kcard .kc-proj{font-size:11px;color:var(--text-faint);margin-bottom:4px;}
+  .kanban-empty{color:var(--text-faint);font-size:11.5px;padding:4px 2px;}
+
+  /* Drop placeholder */
+  .drop-placeholder{height:54px;border:2px dashed var(--accent);border-radius:4px;margin-bottom:8px;opacity:.4;}
+
+  /* ── Modale ── */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal{background:var(--panel);border:1px solid var(--line-strong);border-radius:8px;padding:24px;width:100%;max-width:460px;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+  .modal h3{font-family:var(--font-display);font-size:17px;margin:0 0 18px;}
+  .modal-row{margin-bottom:14px;}
+  .modal-row label{display:block;font-size:12px;color:var(--text-faint);margin-bottom:5px;}
+  .modal-row input[type=text],.modal-row input[type=date],.modal-row select{width:100%;background:var(--panel-alt);border:1px solid var(--line-strong);color:var(--text);font-family:var(--font-body);font-size:13px;padding:8px 10px;border-radius:4px;}
+  .modal-row input[type=text]:focus,.modal-row input[type=date]:focus,.modal-row select:focus{outline:none;border-color:var(--accent);}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+  .modal-btn{font-family:var(--font-body);font-size:13px;padding:8px 18px;border-radius:4px;cursor:pointer;border:none;}
+  .modal-btn.primary{background:var(--accent);color:#fff;}
+  .modal-btn.primary:hover{opacity:.88;}
+  .modal-btn.cancel{background:transparent;border:1px solid var(--line-strong);color:var(--text-muted);}
+  .modal-btn.cancel:hover{border-color:var(--accent);color:var(--text);}
+  .modal-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* ── Config ── */
+  .cfg-block{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;}
+  .cfg-block h3{font-family:var(--font-display);font-size:15px;margin:0 0 4px;}
+  .cfg-block .cfg-desc{color:var(--text-faint);font-size:12px;margin:0 0 12px;}
+  .cfg-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+  .cfg-row label{font-size:12.5px;color:var(--text-muted);min-width:170px;}
+  .cfg-row input[type=text],.cfg-row select{background:var(--panel-alt);border:1px solid var(--line-strong);color:var(--text);font-family:var(--font-body);font-size:13px;padding:6px 8px;border-radius:4px;min-width:220px;flex:1;}
+  .cfg-row .status{font-size:12px;min-width:120px;}
+  .cfg-row .status.ok{color:var(--vert);}
+  .cfg-row .status.err{color:var(--rouge);}
+  .cfg-btn{background:var(--accent);border:none;color:#fff;font-family:var(--font-body);font-weight:500;font-size:13px;padding:8px 16px;border-radius:4px;cursor:pointer;}
+  .cfg-btn.secondary{background:transparent;border:1px solid var(--line-strong);color:var(--text-muted);}
+  .cfg-btn:hover{opacity:.9;}
+  .cfg-check{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-muted);margin-bottom:10px;}
+  .cfg-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line);}
+  @media(max-width:700px){.cfg-fields{grid-template-columns:1fr;}}
+  .cfg-field label{display:block;font-size:11.5px;color:var(--text-faint);margin-bottom:3px;}
+  .cfg-field select{width:100%;}
+  .cfg-actions{display:flex;gap:10px;margin-top:6px;}
+  .cfg-title{font-family:var(--font-display);font-size:20px;margin:0 0 6px;}
+  .cfg-intro{color:var(--text-muted);font-size:13px;margin:0 0 20px;}
+  
+/* ════════════════════════════════════════
+   ONGLET PLANNING / GANTT
+════════════════════════════════════════ */
+.planning-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.planning-toolbar-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.planning-toolbar h1{font-family:var(--font-display);font-weight:600;font-size:20px;margin:0;}
+.planning-nav{display:flex;align-items:center;gap:6px;}
+.planning-nav button{background:transparent;border:1px solid var(--line-strong);color:var(--text-muted);font-family:var(--font-body);font-size:12px;padding:5px 10px;border-radius:var(--radius);cursor:pointer;}
+.planning-nav button:hover{border-color:var(--accent);color:var(--text);}
+.planning-nav button.today-btn{background:var(--accent);border-color:var(--accent);color:#fff;}
+.planning-period{font-family:var(--font-display);font-size:14px;color:var(--text);min-width:160px;text-align:center;}
+
+.gantt-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+.gantt-divider{font-family:var(--font-display);font-size:11.5px;color:var(--text-faint);padding:8px 12px;border-top:1px solid var(--line-strong);border-bottom:1px solid var(--line);background:var(--panel-alt);}
+
+/* En-tête des jours */
+.gantt-header{display:grid;border-bottom:1px solid var(--line-strong);}
+.gantt-header .gh-label{background:var(--panel-alt);padding:8px 12px;font-size:11.5px;color:var(--text-muted);font-family:var(--font-display);border-right:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gantt-header .gh-days{display:flex;overflow:hidden;}
+.gantt-header .gh-day{flex:1;text-align:center;font-size:10px;color:var(--text-faint);padding:4px 0;border-right:1px solid var(--line);min-width:0;}
+.gantt-header .gh-day.today{color:var(--rouge);font-weight:700;}
+.gantt-header .gh-day.weekend{background:rgba(255,255,255,.02);}
+.gantt-header .gh-month-row{display:flex;border-bottom:1px solid var(--line);}
+.gantt-header .gh-month-cell{text-align:center;font-size:11px;color:var(--text-muted);padding:4px 0;border-right:1px solid var(--line);font-family:var(--font-display);}
+
+/* Lignes activités */
+.gantt-body{}
+.gantt-row{display:grid;border-bottom:1px solid var(--line);min-height:36px;}
+.gantt-row:last-child{border-bottom:none;}
+.gantt-row:hover{background:rgba(255,255,255,.02);}
+.gantt-row .gr-label{padding:6px 12px;font-size:12px;color:var(--text);border-right:1px solid var(--line);display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;}
+.gantt-row .gr-label .gr-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gantt-row .gr-label .gr-proj{font-size:10px;color:var(--text-faint);white-space:nowrap;}
+.gantt-row .gr-timeline{position:relative;overflow:hidden;}
+
+/* Barre Gantt */
+.gantt-bar{position:absolute;top:6px;bottom:6px;border-radius:3px;display:flex;align-items:center;padding:0 6px;font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;transition:opacity .15s;}
+.gantt-bar:hover{opacity:.85;}
+
+/* Ligne aujourd'hui */
+.gantt-today-line{position:absolute;top:0;bottom:0;width:2px;background:var(--rouge);opacity:.7;z-index:10;pointer-events:none;}
+
+/* Colonnes weekend */
+.gantt-weekend-col{position:absolute;top:0;bottom:0;background:rgba(255,255,255,.018);pointer-events:none;}
+
+/* Activités sans dates */
+.no-dates-section{margin-top:14px;}
+.no-dates-section h3{font-family:var(--font-display);font-size:13px;color:var(--text-faint);margin:0 0 8px;font-weight:500;}
+.no-dates-list{display:flex;flex-wrap:wrap;gap:8px;}
+.no-dates-chip{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:5px 10px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;}
+.no-dates-chip .chip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+.planning-empty{color:var(--text-faint);font-size:13px;padding:40px 20px;text-align:center;}
+
+/* ── Toggle thème ── */
+.theme-switch{display:flex;align-items:center;gap:8px;cursor:pointer;}
+.theme-switch-label{font-size:11px;color:var(--text-faint);white-space:nowrap;}
+.toggle-track{width:44px;height:24px;background:var(--panel-alt);border:1px solid var(--line-strong);border-radius:12px;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle-track.on{background:var(--accent);}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#5D7480;transition:transform .2s;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;color:#E8EEF1;}
+.toggle-track.on .toggle-thumb{background:#fff;color:#2E86AB;}
+.toggle-track.on .toggle-thumb{transform:translateX(20px);}
+
+
+/* Centrer le contenu du panel statut */
+.panel#statut-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel#statut-panel h2 {
+  width: 100%;
+  text-align: left;
+}
+
+#statut-donut {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+
+/* ══════════════════════════════════════════════
+   ONGLET RAPPORT
+══════════════════════════════════════════════ */
+.rp-toolbar{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.rp-toolbar h1{font-family:var(--font-display);font-weight:600;font-size:20px;margin:0 0 4px;}
+.rp-toolbar .subtitle{color:var(--text-muted);font-size:13px;margin:0;}
+.rp-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.rp-select,.rp-date{background:var(--panel-alt);border:1px solid var(--line-strong);color:var(--text);font-family:var(--font-body);font-size:13px;padding:7px 10px;border-radius:4px;}
+.rp-btn{background:var(--accent);border:none;color:#fff;font-family:var(--font-body);font-weight:500;font-size:13px;padding:7px 14px;border-radius:4px;cursor:pointer;}
+.rp-btn:hover{opacity:.9;}
+
+.rp-item-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);}
+.rp-item-row:last-child{border-bottom:none;}
+.rp-item-row .title{font-size:13px;}
+.rp-item-row .sub{color:var(--text-faint);font-size:11.5px;margin-top:2px;}
+.rp-item-row .date{color:var(--text-muted);font-size:12px;white-space:nowrap;}
+.rp-item-row .check{font-family:var(--font-display);font-weight:600;font-size:12.5px;color:var(--vert);min-width:20px;text-align:right;}
+
+.rp-prog-row{padding:9px 0;border-bottom:1px solid var(--line);}
+.rp-prog-row:last-child{border-bottom:none;}
+.rp-prog-row .top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;}
+.rp-prog-row .top .name{color:var(--text);}
+.rp-prog-row .top .proj{color:var(--text-faint);font-size:11px;margin-left:6px;}
+.rp-prog-row .top .pct{color:var(--text-muted);font-family:var(--font-display);}
+.rp-prog-track{height:6px;background:var(--panel-alt);border-radius:3px;overflow:hidden;border:1px solid var(--line);}
+.rp-prog-fill{height:100%;background:var(--accent);border-radius:3px;}
+
+.rp-ticker-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media (max-width:640px){ .rp-ticker-grid{grid-template-columns:1fr;} }
+.rp-tk-item{background:var(--panel-alt);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.rp-tk-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.rp-tk-item .tk-title{font-size:12px;color:var(--text-muted);margin-bottom:2px;}
+.rp-tk-item .tk-value{font-size:13px;}
+
+.rp-comment-box{width:100%;min-height:110px;background:var(--panel-alt);border:1px solid var(--line-strong);color:var(--text);font-family:var(--font-body);font-size:13.5px;line-height:1.5;padding:12px 14px;border-radius:4px;resize:vertical;}
+.rp-comment-box::placeholder{color:var(--text-faint);}
+.rp-comment-hint{color:var(--text-faint);font-size:11.5px;margin-top:8px;}
+
+@media print{
+  .topnav, .rp-controls, .rp-btn { display:none !important; }
+  body{ background:#fff; color:#111; }
+  .panel{ background:#fff; border-color:#ddd; }
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Chargement…</div></div>
+
+<script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+<script>
+/* ══════════════════════════════════════════════
+   CONSTANTES
+══════════════════════════════════════════════ */
+const FIELD_DEFS = {
+  activites:[
+    {key:'activite',   label:"Nom de l'activité", required:true,  candidates:['Activité','Activite','titre','Titre']},
+    {key:'projet',     label:'Projet lié',         required:false, candidates:['Projet']},
+    {key:'statut',     label:'Statut',             required:true,  candidates:['Statut']},
+    {key:'priorite',   label:'Priorité',           required:false, candidates:['Priorité','Priorite']},
+    {key:'responsable',label:'Responsable',        required:false, candidates:['Responsable','assignees']},
+    {key:'dateDebut',  label:'Date de début',      required:false, candidates:['Date_Début','Date_Debut','dateDebut']},
+    {key:'echeance',   label:'Échéance',           required:false, candidates:['Echéance','Echeance','dateEcheance']},
+    {key:'charge',     label:'Charge (jours)',     required:false, candidates:['Charge','estimationH']},
+    {key:'avancement', label:'Avancement (%)',     required:false, candidates:['Avancement','progression']},
+    {key:'joursAttente',label:'Jours en attente', required:false, candidates:['Jours en attente','Jours_en_attente']}
+  ],
+  projets:[
+    {key:'projet',    label:'Nom du projet',  required:true,  candidates:['Projet']},
+    {key:'priorite',  label:'Priorité',       required:false, candidates:['Priorité','Priorite']},
+    {key:'avancement',label:'Avancement (%)', required:false, candidates:['Avancement']}
+  ],
+  astreintes:[
+    {key:'rang', label:'Rang',          required:false, candidates:['Rang']},
+    {key:'debut',label:'Date de début', required:true,  candidates:['Date_debut','Date_Debut']},
+    {key:'fin',  label:'Date de fin',   required:true,  candidates:['Date_fin']}
+  ],
+  formations:[
+    {key:'nom',        label:'Nom de la formation', required:true,  candidates:['Nom']},
+    {key:'dates',      label:'Date',                required:true,  candidates:['Dates']},
+    {key:'obligatoire',label:'Obligatoire',         required:false, candidates:['Obligatoire']}
+  ],
+  conges:[
+    {key:'nom',  label:'Libellé',         required:false, candidates:['Nom']},
+    {key:'debut',label:'Date de début',   required:true,  candidates:['Date_debut','Date_Debut']},
+    {key:'fin',  label:'Date de fin',     required:true,  candidates:['Date_fin']}
+  ]
+};
+
+const TABLE_DEFS = [
+  {key:'activites',  label:'Activités',  defaultName:'ACTIVITES',  required:true},
+  {key:'projets',    label:'Projets',    defaultName:'PROJETS',    required:false},
+  {key:'astreintes', label:'Astreintes', defaultName:'ASTREINTES', required:false},
+  {key:'formations', label:'Formations', defaultName:'FORMATIONS', required:false},
+  {key:'conges',     label:'Congés',     defaultName:'CONGES',     required:false}
+];
+
+const VIG_COLOR = {vert:'#4CAF7D',jaune:'#E4B93B',orange:'#E08A3C',rouge:'#D64545'};
+
+const KANBAN_COLUMNS = [
+  {statut:'À lancer',  color:'#2E86AB'},
+  {statut:'En cours',  color:VIG_COLOR.vert},
+  {statut:'En attente',color:VIG_COLOR.jaune},
+  {statut:'Terminé',   color:'#5D7480'}
+];
+
+/* ══════════════════════════════════════════════
+   UTILITAIRES
+══════════════════════════════════════════════ */
+function normalize(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function gristDateToDate(v){if(v===null||v===undefined||v==='')return null;if(typeof v==='number')return new Date(v*1000);const dt=new Date(v);return isNaN(dt)?null:dt;}
+function dateToGrist(d){return d?Math.floor(d.getTime()/1000):null;}
+function daysBetween(a,b){return Math.round((a-b)/86400000);}
+function vigilanceForDays(v){if(v===null)return'vert';if(v<7)return'vert';if(v<30)return'jaune';if(v<90)return'orange';return'rouge';}
+function fmtDate(dt){return dt?dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}):'—';}
+
+function toRows(table){
+  const colIds=Object.keys(table).filter(k=>k!=='id');
+  const n=table.id?table.id.length:(colIds.length?table[colIds[0]].length:0);
+  const rows=[];
+  for(let i=0;i<n;i++){const row={id:table.id?table.id[i]:i};for(const c of colIds)row[c]=table[c][i];rows.push(row);}
+  return{rows,colIds};
+}
+
+async function fetchTableSafe(name){
+  if(!name)return null;
+  try{return await grist.docApi.fetchTable(name);}
+  catch(e){console.error(`fetchTable("${name}") échoué:`,e);return null;}
+}
+
+function guessColumn(colIds,candidates){
+  const normCols=colIds.map(c=>({raw:c,norm:normalize(c)}));
+  for(const cand of candidates){const hit=normCols.find(c=>c.norm===normalize(cand));if(hit)return hit.raw;}
+  return'';
+}
+
+/* ══════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════ */
+let cfgState={};
+
+async function showConfigScreen(existing){
+  cfgState={};
+  for(const t of TABLE_DEFS){
+    const saved=existing&&existing[t.key];
+    cfgState[t.key]={enabled:saved?true:t.required,tableName:(saved&&saved.tableName)||t.defaultName,found:false,colIds:[],fields:(saved&&saved.fields)||{}};
+  }
+  renderConfigScreen();
+  for(const t of TABLE_DEFS){await tryLoadTable(t.key,false);}
+}
+
+function renderConfigScreen(){
+  document.getElementById('app').innerHTML=`
+    <h1 class="cfg-title">Configuration du dashboard</h1>
+    <p class="cfg-intro">Indique le nom de chaque table Grist et fais correspondre tes colonnes.</p>
+    <div id="cfg-blocks"></div>
+    <div class="cfg-actions"><button class="cfg-btn" id="cfg-save">Enregistrer la configuration</button></div>`;
+  const blocks=document.getElementById('cfg-blocks');
+  blocks.innerHTML=TABLE_DEFS.map(t=>`
+    <div class="cfg-block" id="cfg-block-${t.key}">
+      <h3>${t.label}${t.required?'':' <span style="color:var(--text-faint);font-weight:400;font-size:12px;">(optionnel)</span>'}</h3>
+      <p class="cfg-desc">${t.key==='activites'?"Table obligatoire, source du dashboard.":"Laisse la case décochée si tu n'as pas cette table."}</p>
+      ${t.required?'':`<label class="cfg-check"><input type="checkbox" id="cfg-enable-${t.key}" ${cfgState[t.key].enabled?'checked':''}/> Utiliser cette table</label>`}
+      <div class="cfg-row">
+        <label for="cfg-name-${t.key}">Nom de la table Grist</label>
+        <input type="text" id="cfg-name-${t.key}" value="${esc(cfgState[t.key].tableName)}" />
+        <button class="cfg-btn secondary" data-load="${t.key}">Charger les colonnes</button>
+        <span class="status" id="cfg-status-${t.key}"></span>
+      </div>
+      <div class="cfg-fields" id="cfg-fields-${t.key}"></div>
+    </div>`).join('');
+  blocks.querySelectorAll('[data-load]').forEach(btn=>{
+    btn.addEventListener('click',()=>tryLoadTable(btn.getAttribute('data-load'),true));
+  });
+  TABLE_DEFS.forEach(t=>{
+    const chk=document.getElementById(`cfg-enable-${t.key}`);
+    if(chk)chk.addEventListener('change',()=>{cfgState[t.key].enabled=chk.checked;});
+  });
+  document.getElementById('cfg-save').addEventListener('click',saveConfig);
+}
+
+async function tryLoadTable(key,manual){
+  const nameInput=document.getElementById(`cfg-name-${key}`);
+  const name=nameInput?nameInput.value.trim():cfgState[key].tableName;
+  cfgState[key].tableName=name;
+  const statusEl=document.getElementById(`cfg-status-${key}`);
+  const raw=await fetchTableSafe(name);
+  if(!raw){
+    cfgState[key].found=false;cfgState[key].colIds=[];
+    if(statusEl){statusEl.textContent=manual?'Table introuvable':'';statusEl.className='status err';}
+    const fieldsEl=document.getElementById(`cfg-fields-${key}`);
+    if(fieldsEl)fieldsEl.innerHTML='';
+    return;
+  }
+  const{colIds}=toRows(raw);
+  cfgState[key].found=true;cfgState[key].colIds=colIds;
+  if(statusEl){statusEl.textContent=`${colIds.length} colonnes trouvées`;statusEl.className='status ok';}
+  for(const def of FIELD_DEFS[key]){
+    if(!cfgState[key].fields[def.key])cfgState[key].fields[def.key]=guessColumn(colIds,def.candidates);
+  }
+  renderFieldMapping(key,colIds);
+}
+
+function renderFieldMapping(key,colIds){
+  const el=document.getElementById(`cfg-fields-${key}`);if(!el)return;
+  el.innerHTML=FIELD_DEFS[key].map(def=>{
+    const current=cfgState[key].fields[def.key]||'';
+    const options=['<option value="">— aucune —</option>'].concat(
+      colIds.map(c=>`<option value="${esc(c)}" ${c===current?'selected':''}>${esc(c)}</option>`)
+    ).join('');
+    return`<div class="cfg-field"><label>${def.label}${def.required?' *':''}</label><select data-table="${key}" data-field="${def.key}">${options}</select></div>`;
+  }).join('');
+  el.querySelectorAll('select').forEach(sel=>{
+    sel.addEventListener('change',()=>{cfgState[sel.dataset.table].fields[sel.dataset.field]=sel.value;});
+  });
+}
+
+function saveConfig(){
+  const config={};
+  for(const t of TABLE_DEFS){
+    const st=cfgState[t.key];
+    if(!st.enabled||!st.found)continue;
+    config[t.key]={tableName:st.tableName,fields:st.fields};
+  }
+  if(!config.activites){alert("La table Activités est obligatoire : charge-la avant d'enregistrer.");return;}
+  grist.setOptions({config});
+}
+
+/* ══════════════════════════════════════════════
+   SHELL AVEC ONGLETS
+══════════════════════════════════════════════ */
+let currentTab='accueil';
+let currentConfig=null;
+
+function initApp(config){currentConfig=config;renderShell();}
+
+function renderShell(){
+document.getElementById('app').innerHTML=`
+    <div class="topnav">
+      <div class="topnav-left">
+        <div class="avatar-circle">
+          <img src="Avatar.png" alt="Avatar" onerror="this.style.display='none'" />
+        </div>
+        <span class="topnav-title">Suivi d'activité</span>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn ${currentTab==='accueil'?'active':''}" data-tab="accueil">Accueil</button>
+        <button class="tab-btn ${currentTab==='activites'?'active':''}" data-tab="activites">Activités</button>
+		<button class="tab-btn ${currentTab==='planning'?'active':''}" data-tab="planning">Planning</button>
+        <button class="tab-btn ${currentTab==='rapport'?'active':''}" data-tab="rapport">Rapport</button>
+      </div>
+      <div class="topnav-actions">
+        <div class="theme-switch" id="theme-switch">
+  <span class="theme-switch-label" id="theme-label">Mode clair</span>
+  <div class="toggle-track" id="toggle-track">
+    <div class="toggle-thumb">🌙</div>
+  </div>
+</div>
+        <button id="refresh-btn">Actualiser</button>
+        <button id="config-btn">Configurer</button>
+      </div>
+    </div>
+    <div id="content"><div class="loading">Chargement…</div></div>`;
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      currentTab=btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('data-tab')===currentTab));
+      loadContent();
+    });
+  });
+  document.getElementById('refresh-btn').addEventListener('click',loadContent);
+  document.getElementById('config-btn').addEventListener('click',()=>showConfigScreen(currentConfig));
+
+  // ── Toggle thème clair/sombre
+  const themeSwitch = document.getElementById('theme-switch');
+  const toggleTrack = document.getElementById('toggle-track');
+  const toggleThumb = toggleTrack.querySelector('.toggle-thumb');
+  const themeLabel  = document.getElementById('theme-label');
+
+  function applyThemeUI(isLight){
+    toggleTrack.classList.toggle('on', isLight);
+    toggleThumb.textContent = isLight ? '☀' : '☾';
+    themeLabel.textContent  = isLight ? 'Mode sombre' : 'Mode clair';
+  }
+
+  applyThemeUI(document.body.classList.contains('theme-light'));
+
+  themeSwitch.addEventListener('click', ()=>{
+    const nowLight = document.body.classList.toggle('theme-light');
+    applyThemeUI(nowLight);
+    localStorage.setItem('theme', nowLight ? 'light' : 'dark');
+  });
+  loadContent();
+}
+
+function loadContent(){
+  if(currentTab==='accueil')renderDashboard(currentConfig);
+  else if(currentTab==='activites')renderActivites(currentConfig);
+  else if(currentTab==='planning')renderPlanning(currentConfig);
+  else if(currentTab==='rapport')renderRapport(currentConfig);
+}
+
+/* ══════════════════════════════════════════════
+   ONGLET ACCUEIL
+══════════════════════════════════════════════ */
+async function renderDashboard(config){
+  const content=document.getElementById('content');
+  content.innerHTML='<div class="loading">Chargement…</div>';
+  const actRaw=await fetchTableSafe(config.activites.tableName);
+  if(!actRaw){
+    content.innerHTML=`<div class="error">Table introuvable. <a href="#" id="reconfig-link" style="color:var(--accent);">Reconfigurer</a></div>`;
+    document.getElementById('reconfig-link').addEventListener('click',e=>{e.preventDefault();showConfigScreen(config);});
+    return;
+  }
+const F=config.activites.fields;
+let proj=[];
+// ── Charger d'abord la map projets pour résoudre les IDs
+const projIdToNom = {};
+if(config.projets){
+  const raw=await fetchTableSafe(config.projets.tableName);
+  if(raw){
+    const PF=config.projets.fields;
+    const projRows=toRows(raw).rows;
+    projRows.forEach(r=>{ projIdToNom[r.id]=r[PF.projet]||'—'; });
+    proj=projRows.map(r=>({projet:r[PF.projet],priorite:r[PF.priorite],avancement:r[PF.avancement]}));
+  }
+}
+// ── Parser les activités en résolvant le projet
+const act=toRows(actRaw).rows.map(r=>{
+  const rawProjet=r[F.projet];
+  let projetNom;
+  if(typeof rawProjet==='number' && projIdToNom[rawProjet]) projetNom=projIdToNom[rawProjet];
+  else if(rawProjet!==null && rawProjet!==undefined && rawProjet!=='') projetNom=String(rawProjet);
+  else projetNom='';
+  return{
+    activite:r[F.activite],projet:projetNom,statut:r[F.statut],priorite:r[F.priorite],
+    responsable:r[F.responsable],dateDebut:gristDateToDate(r[F.dateDebut]),echeance:gristDateToDate(r[F.echeance]),
+    charge:r[F.charge],avancement:r[F.avancement],joursAttente:r[F.joursAttente]
+  };
+});
+  let astreinte=null;
+  if(config.astreintes){const raw=await fetchTableSafe(config.astreintes.tableName);if(raw){const AF=config.astreintes.fields;astreinte={rows:toRows(raw).rows.map(r=>({rang:r[AF.rang],debut:gristDateToDate(r[AF.debut]),fin:gristDateToDate(r[AF.fin])}))}; }}
+  let formation=null;
+  if(config.formations){const raw=await fetchTableSafe(config.formations.tableName);if(raw){const OF=config.formations.fields;formation={rows:toRows(raw).rows.map(r=>({nom:r[OF.nom],dates:gristDateToDate(r[OF.dates]),obligatoire:r[OF.obligatoire]}))};}}
+
+  const NOW=new Date();
+  const total=act.length,enCours=act.filter(a=>a.statut==='En cours').length,terminees=act.filter(a=>a.statut==='Terminé').length;
+  const enAttente=act.filter(a=>a.statut==='En attente').length,enRetard=act.filter(a=>a.statut!=='Terminé'&&a.echeance&&a.echeance<NOW).length;
+
+  content.innerHTML=`
+	<div class="header" style="padding:0;border:none;margin-bottom:22px;">
+	  <img src="Banniere_Widget.jpg" alt="Bannière" style="width:100%;display:block;border-radius:var(--radius);max-height:200px;object-fit:cover;" />
+		<div class="header-inner" style="padding:8px 0 6px;">
+		  <p class="subtitle" style="margin:0;color:var(--text-muted);font-size:13px;">${total} activité${total>1?'s':''} suivies · ${proj.length} projet${proj.length>1?'s':''}</p>
+		  <span style="color:var(--text-faint);font-size:12px;">Mis à jour à ${NOW.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>
+		</div>
+	</div>
+    <div class="kpi-strip">
+      <div class="kpi accent-neutre"><div class="value">${total}</div><div class="label">Total</div></div>
+      <div class="kpi accent-vert"><div class="value">${enCours}</div><div class="label">En cours</div></div>
+      <div class="kpi accent-neutre"><div class="value">${terminees}</div><div class="label">Terminées</div></div>
+      <div class="kpi ${enAttente>0?'accent-jaune':'accent-neutre'}"><div class="value">${enAttente}</div><div class="label">En attente</div></div>
+      <div class="kpi ${enRetard>0?'accent-rouge':'accent-neutre'}"><div class="value">${enRetard}</div><div class="label">En retard</div></div>
+    </div>
+    <div class="grid">
+      <div class="panel"><h2>Avancement par projet</h2><div id="proj-list"></div></div>
+      <div class="panel"><h2>En attente de validation <span class="count">${enAttente}</span></h2><div id="attente-list"></div></div>
+    </div>
+    <div class="subgrid">
+      <div class="panel"><h2>Répartition par statut</h2><div id="statut-donut"></div></div>
+      <div class="panel"><h2>Charge cumulée par projet</h2><div id="charge-bars"></div></div>
+    </div>
+    <div class="ticker" id="ticker"></div>`;
+
+  renderProjetList(proj);renderAttenteList(act,NOW);
+  renderStatutDonut(act);renderChargeBars(act);renderTicker(astreinte,formation,NOW);
+}
+
+function renderProjetList(proj){
+  const el=document.getElementById('proj-list');if(!el)return;
+  if(!proj.length){el.innerHTML='<div class="empty-note">Aucun projet trouvé.</div>';return;}
+  const sorted=[...proj].sort((a,b)=>(b.avancement||0)-(a.avancement||0));
+  el.innerHTML=sorted.map(p=>{
+    const pct=Math.max(0,Math.min(100,Number(p.avancement)||0));
+    const color=p.priorite==='Haute'?VIG_COLOR.orange:VIG_COLOR.vert;
+    return`<div class="proj-row"><div class="top"><span class="name">${esc(p.projet||'—')}</span><span class="pct">${pct}%</span></div>
+      <div class="proj-bar-track"><div class="proj-bar-fill" style="width:${pct}%;background:${color};"></div></div></div>`;
+  }).join('')+`<div class="legend" style="flex-direction:row;margin-top:10px;">
+    <div class="row"><i style="background:${VIG_COLOR.orange}"></i>Priorité haute</div>
+    <div class="row"><i style="background:${VIG_COLOR.vert}"></i>Normale</div></div>`;
+}
+function renderAttenteList(act,NOW){
+  const el=document.getElementById('attente-list');if(!el)return;
+  const waiting=act.filter(a=>a.statut==='En attente');
+  if(!waiting.length){el.innerHTML='<div class="empty-note">Aucune activité en attente.</div>';return;}
+  const withDays=waiting.map(a=>{
+    const dd=a.joursAttente!==null&&a.joursAttente!==undefined&&a.joursAttente!==''?Number(a.joursAttente):(a.dateDebut?daysBetween(NOW,a.dateDebut):null);
+    return{...a,computedDays:dd};
+  }).sort((a,b)=>(b.computedDays??-9999)-(a.computedDays??-9999));
+  el.innerHTML=withDays.map(a=>{
+    const dd=a.computedDays;const level=vigilanceForDays(dd);const label=dd===null?'—':`${dd} j`;
+    return`<div class="log-row"><div><div class="title">${esc(a.activite||'—')}</div><div class="sub">${esc(a.projet||'')}</div></div>
+      <div class="who">${esc(a.responsable||'—')}</div><div class="days ${level}">${label}</div></div>`;
+  }).join('');
+}
+function renderStatutDonut(act){
+  const el=document.getElementById('statut-donut');if(!el)return;
+  const counts={};act.forEach(a=>{const s=a.statut||'Non défini';counts[s]=(counts[s]||0)+1;});
+  const STATUT_COLOR={'Terminé':'#3E5A66','En cours':VIG_COLOR.vert,'En attente':VIG_COLOR.jaune,'À lancer':'#2E86AB'};
+  const labels=Object.keys(counts);const total=act.length;
+  
+  // Valeurs cohérentes pour centrer le donut
+  const r=100;          // rayon du cercle
+  const strokeW=24;    // épaisseur du trait
+  const padding=10;    // marge intérieure
+  const cx=r+strokeW/2+padding;  // centre X = rayon + demi-épaisseur + padding
+  const cy=r+strokeW/2+padding;  // centre Y = rayon + demi-épaisseur + padding
+  const width=(r+strokeW/2+padding)*2;   // largeur totale
+  const height=(r+strokeW/2+padding)*2;  // hauteur totale
+  
+  const circ=2*Math.PI*r;let offset=0;
+  const segments=labels.map(l=>{const val=counts[l];const frac=total?val/total:0;const dash=frac*circ;
+    const seg={l,val,dash,offset,color:STATUT_COLOR[l]||'#5D7480'};offset+=dash;return seg;});
+  
+  const svg=`<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#0F1D26" stroke-width="${strokeW}"/>
+    ${segments.map(s=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${strokeW}"
+      stroke-dasharray="${s.dash} ${circ-s.dash}" stroke-dashoffset="${-s.offset}" transform="rotate(-90 ${cx} ${cy})"/>`).join('')}
+    <text x="${cx}" y="${cy-10}" text-anchor="middle" fill="#E8EEF1" font-family="Space Grotesk" font-size="32" font-weight="600">${total}</text>
+    <text x="${cx}" y="${cy+15}" text-anchor="middle" fill="#8AA2AD" font-family="IBM Plex Sans" font-size="14">activités</text></svg>`;
+  
+  const legend=`<div class="legend">${segments.map(s=>`<div class="row"><i style="background:${s.color}"></i>${esc(s.l)}<span class="n">${s.val}</span></div>`).join('')}</div>`;
+  el.innerHTML=`<div class="donut-wrap">${svg}${legend}</div>`;
+}
+function renderChargeBars(act){
+  const el=document.getElementById('charge-bars');if(!el)return;
+  const byProjet={};
+  act.forEach(a=>{const p=a.projet||'Non affecté';byProjet[p]=(byProjet[p]||0)+(Number(a.charge)||0);});
+  const entries=Object.entries(byProjet).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){el.innerHTML='<div class="empty-note">Charge non renseignée.</div>';return;}
+  const max=Math.max(...entries.map(e=>e[1]));
+  el.innerHTML=entries.map(([name,val])=>`
+    <div class="bar-row"><div class="name">${esc(name)}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${(val/max)*100}%;"></div></div>
+    <div class="bar-val">${val} j</div></div>`).join('');
+}
+function renderTicker(astreinte,formation,NOW){
+  const el=document.getElementById('ticker');if(!el)return;
+  const items=[];
+  if(astreinte&&astreinte.rows.length){
+    const current=astreinte.rows.find(a=>a.debut&&a.fin&&a.debut<=NOW&&NOW<=a.fin);
+    if(current)items.push({dot:VIG_COLOR.orange,title:"Astreinte en cours",value:`Rang ${current.rang||'—'} · jusqu'au ${fmtDate(current.fin)}`});
+    else{const next=astreinte.rows.filter(a=>a.debut&&a.debut>NOW).sort((a,b)=>a.debut-b.debut)[0];
+      items.push({dot:'#5D7480',title:"Astreinte",value:next?`Prochaine le ${fmtDate(next.debut)}`:"Aucune astreinte planifiée"});}
+  }
+  if(formation&&formation.rows.length){
+    const upcoming=formation.rows.filter(f=>f.dates&&f.dates>=NOW).sort((a,b)=>a.dates-b.dates)[0];
+    if(upcoming)items.push({dot:upcoming.obligatoire==='Oui'?VIG_COLOR.rouge:'#5D7480',title:upcoming.obligatoire==='Oui'?"Formation obligatoire":"Formation à venir",value:`${upcoming.nom||'—'} · ${fmtDate(upcoming.dates)}`});
+    else items.push({dot:'#5D7480',title:"Formations",value:"Aucune échéance à venir"});
+  }
+  el.innerHTML=items.map(i=>`<div class="item"><span class="dot" style="background:${i.dot}"></span>
+    <div><div class="t-title">${i.title}</div><div class="t-value">${esc(i.value)}</div></div></div>`).join('');
+}
+
+/* ══════════════════════════════════════════════
+   ONGLET ACTIVITÉS — KANBAN
+══════════════════════════════════════════════ */
+
+// State Kanban
+let kanbanAct = [];          // activités brutes (avec rowId Grist)
+let kanbanProjMap = {};      // { rowId → nomProjet }
+let kanbanProjList = [];     // [{ id, nom }] pour le select
+let kanbanFilter = '__all__';
+let kanbanHideTermine = true;
+let kanbanMaxTermine = 10;
+let kanbanConfig = null;
+let kanbanRawProj = null;    // raw table projets pour le select de la modale
+
+async function renderActivites(config){
+  kanbanConfig = config;
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading">Chargement des données…</div>';
+
+  // ── Charger activités
+  const actRaw = await fetchTableSafe(config.activites.tableName);
+  if(!actRaw){
+    content.innerHTML=`<div class="error">Table "${esc(config.activites.tableName)}" introuvable.</div>`;
+    return;
+  }
+
+  // ── Charger projets pour résolution des IDs
+  kanbanProjMap = {};
+  kanbanProjList = [];
+  kanbanRawProj = null;
+  if(config.projets){
+    const projRaw = await fetchTableSafe(config.projets.tableName);
+    if(projRaw){
+      kanbanRawProj = projRaw;
+      const PF = config.projets.fields;
+      const{rows} = toRows(projRaw);
+      rows.forEach(r=>{
+        // r.id = rowId Grist, r[PF.projet] = nom du projet
+        kanbanProjMap[r.id] = r[PF.projet] || '—';
+        kanbanProjList.push({id: r.id, nom: r[PF.projet] || '—'});
+      });
+      kanbanProjList.sort((a,b)=>String(a.nom).localeCompare(String(b.nom)));
+    }
+  }
+
+  // ── Parser les activités
+  const F = config.activites.fields;
+  kanbanAct = toRows(actRaw).rows.map(r=>{
+    // La colonne "projet" peut être un rowId (entier) ou un nom (string)
+    const rawProjet = r[F.projet];
+    let projetNom;
+    if(typeof rawProjet === 'number' && kanbanProjMap[rawProjet]){
+      projetNom = kanbanProjMap[rawProjet];
+    } else if(rawProjet !== null && rawProjet !== undefined && rawProjet !== ''){
+      projetNom = String(rawProjet);
+    } else {
+      projetNom = '';
+    }
+    return {
+      _rowId: r.id,
+      activite: r[F.activite],
+      projetId: typeof rawProjet==='number' ? rawProjet : null,
+      projet: projetNom,
+      statut: r[F.statut],
+      priorite: r[F.priorite],
+      responsable: r[F.responsable],
+      echeance: gristDateToDate(r[F.echeance]),
+      dateDebut: gristDateToDate(r[F.dateDebut]),
+    };
+  });
+
+  buildKanbanUI(content);
+}
+
+function buildKanbanUI(content){
+  const projOptions = kanbanProjList.map(p=>`<option value="${p.id}">${esc(p.nom)}</option>`).join('');
+
+  content.innerHTML=`
+    <div class="act-toolbar">
+      <div class="act-toolbar-left">
+        <h1>Activités</h1>
+        <select class="act-select" id="project-filter">
+          <option value="__all__">Tous les projets</option>
+          ${projOptions}
+        </select>
+        <label class="act-toggle">
+          <input type="checkbox" id="toggle-termine" ${kanbanHideTermine?'checked':''}/>
+          Masquer les activitées terminées
+        </label>
+      </div>
+      <button class="btn-add-act" id="btn-new-act">＋ Nouvelle activité</button>
+    </div>
+    <div class="kanban" id="kanban-board"></div>`;
+
+  // Remettre le filtre sur la valeur précédente
+  const sel = document.getElementById('project-filter');
+  sel.value = kanbanFilter;
+
+  sel.addEventListener('change',e=>{
+    kanbanFilter = e.target.value;
+    renderKanbanBoard();
+  });
+  document.getElementById('toggle-termine').addEventListener('change',e=>{
+    kanbanHideTermine = e.target.checked;
+    renderKanbanBoard();
+  });
+  document.getElementById('btn-new-act').addEventListener('click',()=>openAddModal());
+
+  renderKanbanBoard();
+}
+
+function getFilteredAct(){
+  let list = kanbanAct;
+
+  // Filtrage par projet
+  if(kanbanFilter !== '__all__'){
+    const filterId = Number(kanbanFilter);
+    list = list.filter(a=> a.projetId === filterId || String(a.projet) === String(kanbanFilter));
+  }
+
+  // Masquage des terminées (mais on garde les N dernières)
+  if(kanbanHideTermine){
+    const nonTermine = list.filter(a=>a.statut !== 'Terminé');
+    const termine = list.filter(a=>a.statut === 'Terminé')
+      .sort((a,b)=>(b.dateDebut||new Date(0))-(a.dateDebut||new Date(0)))
+      .slice(0, kanbanMaxTermine);
+    list = [...nonTermine, ...termine];
+  }
+
+  return list;
+}
+
+function renderKanbanBoard(){
+  const el = document.getElementById('kanban-board'); if(!el)return;
+  const filtered = getFilteredAct();
+  const NOW = new Date();
+
+  el.innerHTML = KANBAN_COLUMNS.map(col=>{
+    let items = filtered.filter(a=>a.statut === col.statut);
+    // Pour "Terminé" avec masquage : déjà slicé dans getFilteredAct
+    const totalInCol = kanbanAct.filter(a=>a.statut===col.statut).length;
+    const hiddenCount = totalInCol - items.length;
+
+    return`<div class="kanban-col" data-statut="${esc(col.statut)}" id="col-${normalize(col.statut)}">
+      <div class="kanban-col-head">
+        <span class="col-title"><span class="col-dot" style="background:${col.color}"></span>${col.statut}</span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span class="col-count">${items.length}${hiddenCount>0&&kanbanHideTermine?' / '+totalInCol:''}</span>
+          <button class="col-add-btn" data-statut="${esc(col.statut)}" title="Ajouter une activité dans ce statut">＋</button>
+        </span>
+      </div>
+      <div class="kanban-cards" data-statut="${esc(col.statut)}">
+        ${items.length ? items.map(a=>renderKcard(a,NOW)).join('') : '<div class="kanban-empty">Aucune activité</div>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Boutons + dans les en-têtes de colonnes
+  el.querySelectorAll('.col-add-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>openAddModal(btn.getAttribute('data-statut')));
+  });
+
+  // Activer le drag & drop
+  initDragDrop();
+}
+
+/* ══════════════════════════════════════════════
+   DRAG & DROP
+══════════════════════════════════════════════ */
+let draggedRowId = null;
+let draggedEl = null;
+let placeholder = null;
+
+function renderKcard(a, NOW){
+  const overdue = a.echeance && a.statut!=='Terminé' && a.echeance < NOW;
+  const prioClass = a.priorite==='Haute'?'prio-haute':'';
+  return`<div class="kcard ${prioClass}" draggable="true" data-row-id="${a._rowId}">
+    ${a.projet?`<div class="kc-proj">📁 ${esc(a.projet)}</div>`:''}
+    <div class="kc-title">${esc(a.activite||'—')}</div>
+    <div class="kc-meta">
+      <span>${esc(a.responsable||'—')}</span>
+      <span class="kc-echeance ${overdue?'overdue':''}">${a.echeance?fmtDate(a.echeance):''}</span>
+    </div>
+  </div>`;
+}
+
+function initDragDrop(){
+  const board = document.getElementById('kanban-board');
+  if(!board) return;
+
+  // ── Drag start sur les cartes
+  board.querySelectorAll('.kcard').forEach(card=>{
+    card.addEventListener('dragstart', e=>{
+      draggedRowId = Number(card.getAttribute('data-row-id'));
+      draggedEl = card;
+      setTimeout(()=>card.classList.add('dragging'), 0);
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', ()=>{
+      card.classList.remove('dragging');
+      removePlaceholder();
+      board.querySelectorAll('.kanban-col').forEach(c=>c.classList.remove('drag-over'));
+      draggedEl = null; draggedRowId = null;
+    });
+  });
+
+  // ── DragOver / Drop sur les colonnes
+  board.querySelectorAll('.kanban-col').forEach(col=>{
+    col.addEventListener('dragover', e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      col.classList.add('drag-over');
+      // Placeholder visuel
+      const cardsZone = col.querySelector('.kanban-cards');
+      if(!placeholder){
+        placeholder = document.createElement('div');
+        placeholder.className = 'drop-placeholder';
+      }
+      // Insérer le placeholder au bon endroit selon la position de la souris
+      const afterEl = getDragAfterElement(cardsZone, e.clientY);
+      if(afterEl){
+        cardsZone.insertBefore(placeholder, afterEl);
+      } else {
+        cardsZone.appendChild(placeholder);
+      }
+    });
+
+    col.addEventListener('dragleave', e=>{
+      if(!col.contains(e.relatedTarget)){
+        col.classList.remove('drag-over');
+        removePlaceholder();
+      }
+    });
+
+    col.addEventListener('drop', async e=>{
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      removePlaceholder();
+      const newStatut = col.getAttribute('data-statut');
+      if(draggedRowId === null || !newStatut) return;
+
+      // Trouver le statut actuel
+      const act = kanbanAct.find(a=>a._rowId === draggedRowId);
+      if(!act || act.statut === newStatut) return;
+
+      // ── Mise à jour optimiste dans le state local
+      act.statut = newStatut;
+      renderKanbanBoard();
+
+      // ── Mise à jour dans Grist
+      try{
+        const F = kanbanConfig.activites.fields;
+        await grist.docApi.applyUserActions([
+          ['UpdateRecord', kanbanConfig.activites.tableName, draggedRowId, {[F.statut]: newStatut}]
+        ]);
+      } catch(err){
+        console.error('Erreur mise à jour statut:', err);
+        // Rollback : recharger depuis Grist
+        await renderActivites(kanbanConfig);
+      }
+    });
+  });
+}
+
+function getDragAfterElement(container, y){
+  const els = [...container.querySelectorAll('.kcard:not(.dragging)')];
+  return els.reduce((closest, el)=>{
+    const box = el.getBoundingClientRect();
+    const offset = y - box.top - box.height/2;
+    if(offset < 0 && offset > closest.offset) return{offset, el};
+    return closest;
+  },{offset: Number.NEGATIVE_INFINITY}).el;
+}
+
+function removePlaceholder(){
+  if(placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+  placeholder = null;
+}
+
+/* ══════════════════════════════════════════════
+   MODALE — AJOUTER UNE ACTIVITÉ
+══════════════════════════════════════════════ */
+function openAddModal(defaultStatut){
+  const statutOptions = KANBAN_COLUMNS.map(c=>
+    `<option value="${esc(c.statut)}" ${c.statut===(defaultStatut||'À lancer')?'selected':''}>${c.statut}</option>`
+  ).join('');
+
+  const projOptions = ['<option value="">— Aucun projet —</option>'].concat(
+    kanbanProjList.map(p=>`<option value="${p.id}">${esc(p.nom)}</option>`)
+  ).join('');
+
+  const backdropHtml = `
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal">
+        <h3>Nouvelle activité</h3>
+        <div class="modal-row">
+          <label>Nom de l'activité *</label>
+          <input type="text" id="m-nom" placeholder="Ex : Rédiger le rapport…" />
+        </div>
+        <div class="modal-row">
+          <label>Projet</label>
+          <select id="m-projet">${projOptions}</select>
+        </div>
+        <div class="modal-row">
+          <label>Statut</label>
+          <select id="m-statut">${statutOptions}</select>
+        </div>
+        <div class="modal-row">
+          <label>Priorité</label>
+          <select id="m-priorite">
+            <option value="">— Aucune —</option>
+            <option value="Haute">Haute</option>
+            <option value="Normale">Normale</option>
+            <option value="Basse">Basse</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <label>Responsable</label>
+          <input type="text" id="m-responsable" placeholder="Nom ou initiales" />
+        </div>
+        <div class="modal-row">
+          <label>Date de début</label>
+          <input type="date" id="m-debut" />
+        </div>
+        <div class="modal-row">
+          <label>Échéance</label>
+          <input type="date" id="m-echeance" />
+        </div>
+        <div class="modal-actions">
+          <button class="modal-btn cancel" id="modal-cancel">Annuler</button>
+          <button class="modal-btn primary" id="modal-ok">Créer l'activité</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.insertAdjacentHTML('beforeend', backdropHtml);
+
+  const backdrop = document.getElementById('modal-backdrop');
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  backdrop.addEventListener('click', e=>{ if(e.target===backdrop) closeModal(); });
+
+  document.getElementById('modal-ok').addEventListener('click', async()=>{
+    const nom = document.getElementById('m-nom').value.trim();
+    if(!nom){ document.getElementById('m-nom').style.borderColor='var(--rouge)'; return; }
+
+    const btn = document.getElementById('modal-ok');
+    btn.disabled = true; btn.textContent = 'Enregistrement…';
+
+    try{
+      const F = kanbanConfig.activites.fields;
+      const projetVal = document.getElementById('m-projet').value;
+      const echeanceVal = document.getElementById('m-echeance').value;
+      const debutVal = document.getElementById('m-debut').value; // ← AJOUT
+
+      // Construire l'objet à insérer selon les colonnes mappées
+      const record = {};
+      if(F.activite)   record[F.activite]   = nom;
+      if(F.statut)     record[F.statut]     = document.getElementById('m-statut').value;
+      if(F.priorite)   record[F.priorite]   = document.getElementById('m-priorite').value;
+      if(F.responsable)record[F.responsable]= document.getElementById('m-responsable').value.trim();
+      if(F.projet && projetVal) record[F.projet] = Number(projetVal) || projetVal;
+      
+      // ← AJOUT : Date de début
+      if(F.dateDebut && debutVal){
+        record[F.dateDebut] = dateToGrist(new Date(debutVal));
+      }
+      
+      if(F.echeance && echeanceVal){
+        record[F.echeance] = dateToGrist(new Date(echeanceVal));
+      }
+
+      await grist.docApi.applyUserActions([
+        ['AddRecord', kanbanConfig.activites.tableName, null, record]
+      ]);
+
+      closeModal();
+      // Recharger pour avoir le vrai rowId Grist
+      await renderActivites(kanbanConfig);
+
+    } catch(err){
+      console.error('Erreur création activité:', err);
+      btn.disabled = false; btn.textContent = "Créer l'activité";
+      alert('Erreur lors de la création : ' + err.message);
+    }
+  });
+
+  // Focus auto
+  setTimeout(()=>document.getElementById('m-nom')?.focus(), 50);
+}
+
+function closeModal(){
+  const bd = document.getElementById('modal-backdrop');
+  if(bd) bd.remove();
+}
+
+
+/* ══════════════════════════════════════════════
+   ONGLET PLANNING — GANTT
+══════════════════════════════════════════════ */
+
+// State planning
+let planningConfig   = null;
+let planningAct      = [];
+let planningProjMap  = {};
+let planningProjList = [];
+let planningFilter   = '__all__';
+let planningOffset   = 0;
+let planningDepth    = 2;  // nombre de mois affichés
+const GANTT_LABEL_W  = 200; // px largeur colonne labels
+
+const STATUT_BAR_COLOR = {
+  'À lancer' : '#2E86AB',
+  'En cours' : '#4CAF7D',
+  'En attente': '#E4B93B',
+  'Terminé'  : '#3E5A66',
+  'Congé'    : '#5D7480',
+  'Astreinte': '#E08A3C',
+  'Formation': '#2E86AB'
+};
+
+let planningAbsences = []; // congés + astreintes + formations, toujours affichés quel que soit le filtre projet
+
+async function loadPlanningAbsences(config){
+  const out = [];
+  if (config.astreintes){
+    const raw = await fetchTableSafe(config.astreintes.tableName);
+    if (raw){
+      const AF = config.astreintes.fields;
+      toRows(raw).rows.forEach(r => out.push({
+        activite: `Astreinte${r[AF.rang]?' — Rang '+r[AF.rang]:''}`, projet:'', statut:'Astreinte',
+        dateDebut: gristDateToDate(r[AF.debut]), echeance: gristDateToDate(r[AF.fin])
+      }));
+    }
+  }
+  if (config.formations){
+    const raw = await fetchTableSafe(config.formations.tableName);
+    if (raw){
+      const OF = config.formations.fields;
+      toRows(raw).rows.forEach(r => {
+        const dt = gristDateToDate(r[OF.dates]);
+        out.push({ activite: r[OF.nom] || 'Formation', projet:'', statut:'Formation', dateDebut: dt, echeance: dt });
+      });
+    }
+  }
+  if (config.conges){
+    const raw = await fetchTableSafe(config.conges.tableName);
+    if (raw){
+      const CF = config.conges.fields;
+      toRows(raw).rows.forEach(r => out.push({
+        activite: r[CF.nom] || 'Congé', projet:'', statut:'Congé',
+        dateDebut: gristDateToDate(r[CF.debut]), echeance: gristDateToDate(r[CF.fin])
+      }));
+    }
+  }
+  return out;
+}
+
+async function renderPlanning(config){
+  planningConfig = config;
+  const content  = document.getElementById('content');
+  content.innerHTML = '<div class="loading">Chargement du planning…</div>';
+
+  // ── Charger projets
+  planningProjMap  = {};
+  planningProjList = [];
+  if(config.projets){
+    const raw = await fetchTableSafe(config.projets.tableName);
+    if(raw){
+      const PF = config.projets.fields;
+      toRows(raw).rows.forEach(r=>{
+        planningProjMap[r.id]  = r[PF.projet] || '—';
+        planningProjList.push({id:r.id, nom:r[PF.projet]||'—'});
+      });
+      planningProjList.sort((a,b)=>String(a.nom).localeCompare(String(b.nom)));
+    }
+  }
+
+  // ── Charger activités
+  const actRaw = await fetchTableSafe(config.activites.tableName);
+  if(!actRaw){
+    content.innerHTML = `<div class="error">Table activités introuvable.</div>`;
+    return;
+  }
+  const F = config.activites.fields;
+  planningAct = toRows(actRaw).rows.map(r=>{
+    const rawProjet = r[F.projet];
+    let projetNom;
+    if(typeof rawProjet==='number' && planningProjMap[rawProjet]) projetNom = planningProjMap[rawProjet];
+    else if(rawProjet!==null && rawProjet!==undefined && rawProjet!=='') projetNom = String(rawProjet);
+    else projetNom = '';
+    return{
+      _rowId    : r.id,
+      activite  : r[F.activite],
+      projetId  : typeof rawProjet==='number' ? rawProjet : null,
+      projet    : projetNom,
+      statut    : r[F.statut],
+      priorite  : r[F.priorite],
+      responsable:r[F.responsable],
+      dateDebut : gristDateToDate(r[F.dateDebut]),
+      echeance  : gristDateToDate(r[F.echeance]),
+    };
+  });
+
+  planningAbsences = await loadPlanningAbsences(config);
+
+  buildPlanningUI(content);
+}
+
+function buildPlanningUI(content){
+  const projOptions = planningProjList
+    .map(p=>`<option value="${p.id}">${esc(p.nom)}</option>`)
+    .join('');
+
+content.innerHTML = `
+    <div class="planning-toolbar">
+      <div class="planning-toolbar-left">
+        <h1>Planning</h1>
+        <select class="act-select" id="planning-proj-filter">
+          <option value="__all__">Tous les projets</option>
+          ${projOptions}
+        </select>
+        <select class="act-select" id="planning-depth" style="min-width:130px;">
+          <option value="1">1 mois</option>
+          <option value="2" selected>2 mois</option>
+          <option value="3">3 mois</option>
+          <option value="6">6 mois</option>
+          <option value="12">12 mois</option>
+        </select>
+      </div>
+      <div class="planning-nav">
+        <button id="plan-prev">◀</button>
+        <button class="today-btn" id="plan-today">Aujourd'hui</button>
+        <button id="plan-next">▶</button>
+        <span class="planning-period" id="plan-period"></span>
+      </div>
+    </div>
+    <div id="gantt-container"></div>
+    <div class="no-dates-section" id="no-dates-section"></div>`;
+
+  // Restaurer filtre
+  const sel = document.getElementById('planning-proj-filter');
+  sel.value = planningFilter;
+  sel.addEventListener('change', e=>{ planningFilter = e.target.value; drawGantt(); });
+
+  document.getElementById('plan-prev').addEventListener('click',  ()=>{ planningOffset--; drawGantt(); });
+  document.getElementById('plan-next').addEventListener('click',  ()=>{ planningOffset++; drawGantt(); });
+  document.getElementById('plan-today').addEventListener('click', ()=>{ planningOffset=0; drawGantt(); });
+
+  // Restaurer et brancher la profondeur
+  const depthSel = document.getElementById('planning-depth');
+  depthSel.value = String(planningDepth);
+  depthSel.addEventListener('change', e=>{
+    planningDepth = Number(e.target.value);
+    planningOffset = 0;
+    drawGantt();
+  });
+
+  drawGantt();
+}
+
+function drawGantt(){
+  // ── Période affichée : mois courant + offset, étalé sur ~2 mois glissants
+  const NOW     = new Date();
+  const anchor  = new Date(NOW.getFullYear(), NOW.getMonth() + planningOffset, 1);
+  const viewStart = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+  const viewEnd = new Date(anchor.getFullYear(), anchor.getMonth() + planningDepth, 0);
+
+  // Label période
+  const monthFmt = new Intl.DateTimeFormat('fr-FR', {month:'long', year:'numeric'});
+  const m1 = new Intl.DateTimeFormat('fr-FR',{month:'short'}).format(viewStart);
+  const m2 = new Intl.DateTimeFormat('fr-FR',{month:'short',year:'numeric'}).format(viewEnd);
+  document.getElementById('plan-period').textContent = `${m1} – ${m2}`;
+
+  const totalDays = daysBetween(viewEnd, viewStart) + 1;
+
+  // ── Filtrer activités
+  let acts = planningAct;
+  if(planningFilter !== '__all__'){
+    const fid = Number(planningFilter);
+    acts = acts.filter(a=> a.projetId===fid || String(a.projet)===String(planningFilter));
+  }
+
+  // Séparer avec dates / sans dates
+  const withDates = acts
+  .filter(a=> a.dateDebut || a.echeance)
+  .sort((a,b)=>{
+    const da = a.dateDebut || a.echeance;
+    const db = b.dateDebut || b.echeance;
+    return da - db;
+  });
+  const noDates   = acts.filter(a=> !a.dateDebut && !a.echeance);
+
+  // ── Construire l'en-tête (mois + jours)
+  // Générer tous les jours
+  const days = [];
+  for(let d=new Date(viewStart); d<=viewEnd; d.setDate(d.getDate()+1)){
+    days.push(new Date(d));
+  }
+
+  // Grouper par mois pour l'en-tête mois
+  const monthGroups = [];
+  days.forEach(d=>{
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if(!monthGroups.length || monthGroups[monthGroups.length-1].key !== key){
+      monthGroups.push({key, label: new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'}).format(d), count:1});
+    } else {
+      monthGroups[monthGroups.length-1].count++;
+    }
+  });
+
+  const dayPct = 100 / totalDays; // % par jour
+
+  // ── Calcul position aujourd'hui
+  const todayOffset = daysBetween(NOW, viewStart);
+  const todayPct    = ((todayOffset + 0.5) / totalDays) * 100;
+  const showToday   = todayOffset >= 0 && todayOffset < totalDays;
+
+  // ── HTML header
+  const monthRowHtml = monthGroups.map(m=>
+    `<div class="gh-month-cell" style="flex:${m.count}">${m.label}</div>`
+  ).join('');
+
+  const daysRowHtml = days.map(d=>{
+    const isToday   = d.toDateString() === NOW.toDateString();
+    const isWeekend = d.getDay()===0 || d.getDay()===6;
+    const cls = [isToday?'today':'', isWeekend?'weekend':''].filter(Boolean).join(' ');
+    return`<div class="gh-day ${cls}" style="flex:1">${d.getDate()}</div>`;
+  }).join('');
+
+  // ── HTML lignes activités
+  const rowsHtml = withDates.map(a=>{
+    // Dates effectives : si manquante on utilise l'autre
+    const start = a.dateDebut || a.echeance;
+    const end   = a.echeance  || a.dateDebut;
+
+    // Clamp dans la vue
+    const clampStart = start < viewStart ? viewStart : start;
+    const clampEnd   = end   > viewEnd   ? viewEnd   : end;
+
+    // Si complètement hors vue
+    if(clampStart > viewEnd || clampEnd < viewStart){
+      // Afficher quand même la ligne mais sans barre (activité hors période)
+      return buildGanttRow(a, null, null, totalDays, days, showToday, todayPct);
+    }
+
+    const startPct = (daysBetween(clampStart, viewStart) / totalDays) * 100;
+    const widthPct = Math.max(0.5, ((daysBetween(clampEnd, clampStart)+1) / totalDays) * 100);
+
+    return buildGanttRow(a, startPct, widthPct, totalDays, days, showToday, todayPct);
+  }).join('');
+
+  // ── HTML lignes congés / astreintes / formations (toujours affichées, indépendamment du filtre projet)
+  const visibleAbsences = planningAbsences.filter(a=>{
+    const start = a.dateDebut || a.echeance, end = a.echeance || a.dateDebut;
+    return !(end < viewStart || start > viewEnd);
+  });
+  const absencesRowsHtml = visibleAbsences.map(a=>{
+    const start = a.dateDebut || a.echeance, end = a.echeance || a.dateDebut;
+    const clampStart = start < viewStart ? viewStart : start;
+    const clampEnd   = end   > viewEnd   ? viewEnd   : end;
+    const startPct = (daysBetween(clampStart, viewStart) / totalDays) * 100;
+    const widthPct = Math.max(0.5, ((daysBetween(clampEnd, clampStart)+1) / totalDays) * 100);
+    return buildGanttRow(a, startPct, widthPct, totalDays, days, showToday, todayPct);
+  }).join('');
+
+  // ── Assembler
+  const gridTemplate = `${GANTT_LABEL_W}px 1fr`;
+
+  const html = `
+    <div class="gantt-wrap">
+      <div class="gantt-header" style="grid-template-columns:${gridTemplate}">
+        <div class="gh-label" style="grid-row:1/3;display:flex;align-items:center;font-size:12px;color:var(--text-faint);">Activité</div>
+        <div style="display:flex;" class="gh-month-row">${monthRowHtml}</div>
+        <div class="gh-days">${daysRowHtml}</div>
+      </div>
+      <div class="gantt-body">
+        ${rowsHtml || '<div class="planning-empty">Aucune activité avec des dates sur cette période.</div>'}
+      </div>
+      ${absencesRowsHtml ? `
+      <div class="gantt-divider">Congés, astreintes et formations</div>
+      <div class="gantt-body">${absencesRowsHtml}</div>` : ''}
+    </div>`;
+
+  document.getElementById('gantt-container').innerHTML = html;
+
+  // ── Section sans dates
+  const ndEl = document.getElementById('no-dates-section');
+  if(noDates.length){
+    ndEl.innerHTML = `
+      <h3>⚠️ Activités sans dates (${noDates.length})</h3>
+      <div class="no-dates-list">
+        ${noDates.map(a=>{
+          const color = STATUT_BAR_COLOR[a.statut]||'#5D7480';
+          return`<div class="no-dates-chip">
+            <span class="chip-dot" style="background:${color}"></span>
+            <span>${esc(a.activite||'—')}</span>
+            ${a.projet?`<span style="color:var(--text-faint);font-size:10px;">· ${esc(a.projet)}</span>`:''}
+          </div>`;
+        }).join('')}
+      </div>`;
+  } else {
+    ndEl.innerHTML = '';
+  }
+}
+
+function buildGanttRow(a, startPct, widthPct, totalDays, days, showToday, todayPct){
+  const color    = STATUT_BAR_COLOR[a.statut] || '#5D7480';
+  const gridTpl  = `${GANTT_LABEL_W}px 1fr`;
+  const overdue  = a.echeance && a.statut!=='Terminé' && a.echeance < new Date();
+
+  // Colonnes weekend en fond
+  const weekendCols = days.map((d,i)=>{
+    if(d.getDay()===0||d.getDay()===6){
+      const left = (i/totalDays)*100;
+      const w    = (1/totalDays)*100;
+      return`<div class="gantt-weekend-col" style="left:${left}%;width:${w}%"></div>`;
+    }
+    return'';
+  }).join('');
+
+  const barHtml = startPct !== null
+    ? `<div class="gantt-bar" style="left:${startPct}%;width:${widthPct}%;background:${color};"
+        title="${esc(a.activite)} · ${fmtDate(a.dateDebut)} → ${fmtDate(a.echeance)}">
+        ${esc(a.activite||'—')}
+       </div>`
+    : `<div style="position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-faint);">hors période</div>`;
+
+  const todayLine = showToday
+    ? `<div class="gantt-today-line" style="left:${todayPct}%"></div>`
+    : '';
+
+  return`
+    <div class="gantt-row" style="grid-template-columns:${gridTpl}">
+      <div class="gr-label" title="${esc(a.activite||'—')}">
+        <span class="chip-dot" style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
+        <div style="min-width:0;">
+          <div class="gr-name" style="${overdue?'color:var(--rouge)':''}">${esc(a.activite||'—')}</div>
+          ${a.projet?`<div class="gr-proj">${esc(a.projet)}</div>`:''}
+        </div>
+      </div>
+      <div class="gr-timeline" style="position:relative;">
+        ${weekendCols}
+        ${barHtml}
+        ${todayLine}
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════
+   ONGLET RAPPORT
+══════════════════════════════════════════════ */
+let rapportConfig = null;
+let rapportPeriodMode = 'trimestre'; // 'mois_precedent' | 'trimestre' | 'libre'
+let rapportCustomStart = null;
+let rapportCustomEnd = null;
+
+function computeRapportPeriod(){
+  const NOW = new Date();
+  if (rapportPeriodMode === 'mois_precedent'){
+    const start = new Date(NOW.getFullYear(), NOW.getMonth()-1, 1);
+    const end   = new Date(NOW.getFullYear(), NOW.getMonth(), 0);
+    return { start, end, label: new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'}).format(start) };
+  }
+  if (rapportPeriodMode === 'libre' && rapportCustomStart && rapportCustomEnd){
+    return { start: rapportCustomStart, end: rapportCustomEnd, label: `${fmtDate(rapportCustomStart)} → ${fmtDate(rapportCustomEnd)}` };
+  }
+  // trimestre en cours
+  const qStartMonth = Math.floor(NOW.getMonth()/3)*3;
+  const start = new Date(NOW.getFullYear(), qStartMonth, 1);
+  const end   = new Date(NOW.getFullYear(), qStartMonth+3, 0);
+  const m1 = new Intl.DateTimeFormat('fr-FR',{month:'long'}).format(start);
+  const m2 = new Intl.DateTimeFormat('fr-FR',{month:'long',year:'numeric'}).format(end);
+  return { start, end, label: `${m1} - ${m2}` };
+}
+
+function overlapDays(start, end, periodStart, periodEnd){
+  const s = start < periodStart ? periodStart : start;
+  const e = end > periodEnd ? periodEnd : end;
+  if (e < s) return 0;
+  return daysBetween(e, s) + 1;
+}
+
+async function renderRapport(config){
+  rapportConfig = config;
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading">Chargement du rapport…</div>';
+
+  // ── Activités (+ résolution du nom de projet, comme sur les autres onglets)
+  let projIdToNom = {};
+  if (config.projets){
+    const raw = await fetchTableSafe(config.projets.tableName);
+    if (raw){ const PF = config.projets.fields; toRows(raw).rows.forEach(r=>{ projIdToNom[r.id] = r[PF.projet] || '—'; }); }
+  }
+  const actRaw = await fetchTableSafe(config.activites.tableName);
+  if (!actRaw){ content.innerHTML = `<div class="error">Table activités introuvable.</div>`; return; }
+  const F = config.activites.fields;
+  const act = toRows(actRaw).rows.map(r=>{
+    const rawProjet = r[F.projet];
+    let projetNom;
+    if (typeof rawProjet==='number' && projIdToNom[rawProjet]) projetNom = projIdToNom[rawProjet];
+    else if (rawProjet!==null && rawProjet!==undefined && rawProjet!=='') projetNom = String(rawProjet);
+    else projetNom = '';
+    return {
+      activite:r[F.activite], projet:projetNom, statut:r[F.statut], responsable:r[F.responsable],
+      dateDebut:gristDateToDate(r[F.dateDebut]), echeance:gristDateToDate(r[F.echeance]),
+      joursAttente:r[F.joursAttente]
+    };
+  });
+
+  const absences = await loadPlanningAbsences(config);
+
+  buildRapportUI(content, act, absences);
+}
+
+function buildRapportUI(content, act, absences){
+  content.innerHTML = `
+    <div class="rp-toolbar">
+      <div>
+        <h1>Rapport d'activité</h1>
+        <p class="subtitle" id="rp-period-label"></p>
+      </div>
+      <div class="rp-controls">
+        <select class="rp-select" id="rp-mode">
+          <option value="mois_precedent" ${rapportPeriodMode==='mois_precedent'?'selected':''}>Mois précédent</option>
+          <option value="trimestre" ${rapportPeriodMode==='trimestre'?'selected':''}>Trimestre en cours</option>
+          <option value="libre" ${rapportPeriodMode==='libre'?'selected':''}>Dates libres…</option>
+        </select>
+        <span id="rp-custom-dates" style="display:${rapportPeriodMode==='libre'?'flex':'none'};gap:6px;">
+          <input type="date" class="rp-date" id="rp-start" value="${rapportCustomStart?rapportCustomStart.toISOString().slice(0,10):''}" />
+          <input type="date" class="rp-date" id="rp-end" value="${rapportCustomEnd?rapportCustomEnd.toISOString().slice(0,10):''}" />
+        </span>
+        <button class="rp-btn" id="rp-print">Imprimer / PDF</button>
+      </div>
+    </div>
+    <div id="rp-body"></div>
+  `;
+
+  document.getElementById('rp-print').addEventListener('click', () => window.print());
+  document.getElementById('rp-mode').addEventListener('change', (e) => {
+    rapportPeriodMode = e.target.value;
+    document.getElementById('rp-custom-dates').style.display = rapportPeriodMode==='libre' ? 'flex' : 'none';
+    if (rapportPeriodMode !== 'libre') renderRapportBody(act, absences);
+  });
+  document.getElementById('rp-start').addEventListener('change', (e) => { rapportCustomStart = e.target.value ? new Date(e.target.value+'T00:00:00') : null; if(rapportCustomStart && rapportCustomEnd) renderRapportBody(act, absences); });
+  document.getElementById('rp-end').addEventListener('change', (e) => { rapportCustomEnd = e.target.value ? new Date(e.target.value+'T00:00:00') : null; if(rapportCustomStart && rapportCustomEnd) renderRapportBody(act, absences); });
+
+  renderRapportBody(act, absences);
+}
+
+function renderRapportBody(act, absences){
+  const { start, end, label } = computeRapportPeriod();
+  document.getElementById('rp-period-label').textContent = label.charAt(0).toUpperCase()+label.slice(1);
+
+  const terminees = act.filter(a => a.statut==='Terminé' && a.echeance && a.echeance>=start && a.echeance<=end);
+  const enCours = act.filter(a => a.statut==='En cours' && a.dateDebut && a.dateDebut<=end && (!a.echeance || a.echeance>=start));
+  const bloquees = act.filter(a => a.statut==='En attente').map(a => {
+    let jours = a.joursAttente!==null && a.joursAttente!==undefined && a.joursAttente!=='' ? Number(a.joursAttente) : (a.dateDebut ? daysBetween(new Date(), a.dateDebut) : 0);
+    return { ...a, jours };
+  }).sort((a,b) => b.jours - a.jours);
+
+  const conges = absences.filter(a => a.statut==='Congé' && !((a.echeance||a.dateDebut) < start || (a.dateDebut||a.echeance) > end));
+  const joursConges = conges.reduce((sum,a) => sum + overlapDays(a.dateDebut||a.echeance, a.echeance||a.dateDebut, start, end), 0);
+  const astreintesFormations = absences.filter(a => (a.statut==='Astreinte'||a.statut==='Formation') && !((a.echeance||a.dateDebut) < start || (a.dateDebut||a.echeance) > end));
+
+  const projetsTouches = new Set([...terminees, ...enCours].map(a=>a.projet).filter(Boolean)).size;
+  const blocagesLongs = bloquees.filter(b => b.jours >= 30).length;
+
+  const commentKey = 'rapport-comment-' + label;
+  const savedComment = localStorage.getItem(commentKey) || '';
+
+  document.getElementById('rp-body').innerHTML = `
+    <div class="kpi-strip">
+      <div class="kpi accent-neutre"><div class="value">${projetsTouches}</div><div class="label">Projets touchés sur la période</div></div>
+      <div class="kpi accent-neutre"><div class="value">${terminees.length}</div><div class="label">Activités terminées</div></div>
+      <div class="kpi ${blocagesLongs>0?'accent-jaune':'accent-neutre'}"><div class="value">${blocagesLongs}</div><div class="label">Blocages en attente depuis plus de 30 jours</div></div>
+      <div class="kpi accent-neutre"><div class="value">${joursConges}</div><div class="label">Jours de congé sur la période</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Terminé sur la période</h2>
+      <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">${terminees.length} activité${terminees.length>1?'s':''}</p>
+      ${terminees.length ? terminees.map(a => `
+        <div class="rp-item-row">
+          <div><div class="title">${esc(a.activite||'—')}</div><div class="sub">${esc(a.projet||'')}</div></div>
+          <div class="date">${fmtDate(a.echeance)}</div>
+          <div class="check">✓</div>
+        </div>`).join('') : '<div class="empty-note">Aucune activité clôturée sur la période.</div>'}
+    </div>
+
+    <div class="panel">
+      <h2>En cours, en progression</h2>
+      <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Activités actives sur la période, même sans clôture</p>
+      ${enCours.length ? enCours.map(a => `
+        <div class="rp-prog-row">
+          <div class="top"><span class="name">${esc(a.activite||'—')}<span class="proj">${esc(a.projet||'')}</span></span></div>
+        </div>`).join('') : '<div class="empty-note">Aucune activité en cours sur la période.</div>'}
+    </div>
+
+    <div class="panel">
+      <h2>Bloqué en dehors de vous <span style="color:var(--text-faint);font-weight:400;font-family:var(--font-body);font-size:12px;">${bloquees.length}</span></h2>
+      <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Situation actuelle, indépendamment de la période choisie</p>
+      ${bloquees.length ? bloquees.map(a => {
+        const level = vigilanceForDays(a.jours);
+        return `<div class="log-row">
+          <div><div class="title">${esc(a.activite||'—')}</div><div class="sub">${esc(a.projet||'')}</div></div>
+          <div class="who">${esc(a.responsable||'—')}</div>
+          <div class="days ${level}">${a.jours} j</div>
+        </div>`;
+      }).join('') : '<div class="empty-note">Aucun blocage en cours.</div>'}
+    </div>
+
+    <div class="panel">
+      <h2>Congés, astreintes et formations</h2>
+      <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Temps mobilisé en dehors du suivi de projet</p>
+      <div class="rp-ticker-grid">
+        ${conges.map(a => `
+          <div class="rp-tk-item"><span class="dot" style="background:${STATUT_BAR_COLOR['Congé']}"></span>
+            <div><div class="tk-title">Congé</div><div class="tk-value">${fmtDate(a.dateDebut)} → ${fmtDate(a.echeance)}</div></div>
+          </div>`).join('')}
+        ${astreintesFormations.map(a => `
+          <div class="rp-tk-item"><span class="dot" style="background:${STATUT_BAR_COLOR[a.statut]}"></span>
+            <div><div class="tk-title">${a.statut}</div><div class="tk-value">${esc(a.activite)} · ${fmtDate(a.dateDebut)}${a.echeance && a.echeance.getTime()!==a.dateDebut.getTime() ? ' → '+fmtDate(a.echeance) : ''}</div></div>
+          </div>`).join('')}
+        ${(!conges.length && !astreintesFormations.length) ? '<div class="empty-note">Aucune absence ni astreinte sur la période.</div>' : ''}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Contexte et commentaires</h2>
+      <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Ce que les chiffres ne montrent pas — à toi de le rédiger avant partage</p>
+      <textarea class="rp-comment-box" id="rp-comment" placeholder="Ex : Ce trimestre a été en partie mobilisé par la gestion opérationnelle (astreintes, réunions GT IA). Les blocages en attente ne dépendent pas de moi.">${esc(savedComment)}</textarea>
+      <p class="rp-comment-hint">Rien n'est envoyé automatiquement : ce texte est sauvegardé dans ton navigateur pour cette période, à toi de le relire et de partager le rapport quand tu es prêt (impression, PDF, ou copier-coller).</p>
+    </div>
+  `;
+
+  document.getElementById('rp-comment').addEventListener('change', (e) => {
+    localStorage.setItem(commentKey, e.target.value);
+  });
+}
+
+/* ══════════════════════════════════════════════
+   INIT GRIST
+══════════════════════════════════════════════ */
+// Restaurer le thème sauvegardé
+if(localStorage.getItem('theme') === 'light'){
+  document.body.classList.add('theme-light');
+}
+
+grist.ready({ requiredAccess: 'full' });
+
+grist.onOptions((options) => {
+  try {
+    const config = options && options.config;
+    if(config && config.activites) initApp(config);
+    else showConfigScreen(config);
+  } catch(e) {
+    console.error('Erreur onOptions:', e);
+    document.getElementById('app').innerHTML =
+      `<div class="error">Erreur d'initialisation : ${esc(e.message)}<br/>
+       <a href="#" onclick="showConfigScreen(null)" style="color:var(--accent);">Reconfigurer</a></div>`;
+  }
+});
+</script>
+</body>
+</html>
