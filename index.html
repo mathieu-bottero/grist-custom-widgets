@@ -1459,7 +1459,7 @@ function drawGantt(){
 function buildGanttRow(a, startPct, widthPct, totalDays, days, showToday, todayPct){
   const color    = STATUT_BAR_COLOR[a.statut] || '#5D7480';
   const gridTpl  = `${GANTT_LABEL_W}px 1fr`;
-  // const overdue  = a.echeance && a.statut!=='Terminé' && a.echeance < new Date(); ← SUPPRIMÉ
+  const overdue  = a.echeance && a.statut!=='Terminé' && a.echeance < new Date();
 
   // Colonnes weekend en fond
   const weekendCols = days.map((d,i)=>{
@@ -1487,7 +1487,7 @@ function buildGanttRow(a, startPct, widthPct, totalDays, days, showToday, todayP
       <div class="gr-label" title="${esc(a.activite||'—')}">
         <span class="chip-dot" style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
         <div style="min-width:0;">
-          <div class="gr-name">${esc(a.activite||'—')}</div>
+          <div class="gr-name" style="${overdue?'color:var(--rouge)':''}">${esc(a.activite||'—')}</div>
           ${a.projet?`<div class="gr-proj">${esc(a.projet)}</div>`:''}
         </div>
       </div>
@@ -1629,7 +1629,7 @@ function renderRapportBody(act, absences){
       <div class="kpi accent-neutre"><div class="value">${joursConges}</div><div class="label">Jours de congé sur la période</div></div>
     </div>
 
-    <div class="panel" style="margin-bottom:18px;">
+    <div class="panel">
       <h2>Terminé sur la période</h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">${terminees.length} activité${terminees.length>1?'s':''}</p>
       ${terminees.length ? terminees.map(a => `
@@ -1640,7 +1640,7 @@ function renderRapportBody(act, absences){
         </div>`).join('') : '<div class="empty-note">Aucune activité clôturée sur la période.</div>'}
     </div>
 
-    <div class="panel" style="margin-bottom:18px;">
+    <div class="panel">
       <h2>En cours, en progression</h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Activités actives sur la période, même sans clôture</p>
       ${enCours.length ? enCours.map(a => `
@@ -1649,7 +1649,7 @@ function renderRapportBody(act, absences){
         </div>`).join('') : '<div class="empty-note">Aucune activité en cours sur la période.</div>'}
     </div>
 
-    <div class="panel" style="margin-bottom:18px;">
+    <div class="panel">
       <h2>Bloqué en dehors de vous <span style="color:var(--text-faint);font-weight:400;font-family:var(--font-body);font-size:12px;">${bloquees.length}</span></h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Situation actuelle, indépendamment de la période choisie</p>
       ${bloquees.length ? bloquees.map(a => {
@@ -1662,7 +1662,7 @@ function renderRapportBody(act, absences){
       }).join('') : '<div class="empty-note">Aucun blocage en cours.</div>'}
     </div>
 
-    <div class="panel" style="margin-bottom:18px;">
+    <div class="panel">
       <h2>Congés, astreintes et formations</h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Temps mobilisé en dehors du suivi de projet</p>
       <div class="rp-ticker-grid">
@@ -1678,7 +1678,7 @@ function renderRapportBody(act, absences){
       </div>
     </div>
 
-    <div class="panel" style="margin-bottom:18px;">
+    <div class="panel">
       <h2>Contexte et commentaires</h2>
       <p style="color:var(--text-faint);font-size:12px;margin:0 0 14px;">Ce que les chiffres ne montrent pas — à toi de le rédiger avant partage</p>
       <textarea class="rp-comment-box" id="rp-comment" placeholder="Ex : Ce trimestre a été en partie mobilisé par la gestion opérationnelle (astreintes, réunions GT IA). Les blocages en attente ne dépendent pas de moi.">${esc(savedComment)}</textarea>
