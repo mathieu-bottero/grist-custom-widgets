@@ -22,27 +22,34 @@
   </style>
 </head>
 <body>
-  <div id="status" class="loading">🔍 Recherche de la station...</div>
+  <div id="status" class="loading">🔍 Initialisation...</div>
   
   <script>
     grist.ready({
-      requiredAccess: 'read table',
-      onEditOptions: function() {
-        // Options du widget si besoin
-      }
+      requiredAccess: 'read table'
     });
     
     async function filterByCodeStation() {
       const statusEl = document.getElementById('status');
       
       try {
-        // Récupérer le paramètre 'code' de l'URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const codeStation = urlParams.get('code');
+        // Essayer de lire depuis le hash de l'URL parente
+        let codeStation = null;
+        
+        // Méthode 1 : Depuis le hash de la page parent
+        if (window.parent.location.hash) {
+          const hash = window.parent.location.hash.substring(1); // Enlever le #
+          const params = new URLSearchParams(hash);
+          codeStation = params.get('code');
+        }
+        
+        // Debug
+        console.log('Hash parent:', window.parent.location.hash);
+        console.log('Code trouvé:', codeStation);
         
         if (!codeStation) {
           statusEl.className = 'error';
-          statusEl.textContent = '❌ Aucun code fourni dans l\'URL';
+          statusEl.innerHTML = `❌ Aucun code fourni<br><small>Utilisez #code=XXX dans l'URL</small>`;
           return;
         }
         
@@ -51,10 +58,14 @@
         // Charger la table stations
         const tableData = await grist.docApi.fetchTable('stations');
         
+        console.log('Nombre de stations:', tableData.id.length);
+        
         // Trouver l'index de la station
         const index = tableData.code_station.findIndex(
           code => code && code.trim() === codeStation.trim()
         );
+        
+        console.log('Index trouvé:', index);
         
         if (index === -1) {
           statusEl.className = 'error';
@@ -64,6 +75,8 @@
         
         const rowId = tableData.id[index];
         const nomStation = tableData.nom_station_hydro[index];
+        
+        console.log('Row ID:', rowId, 'Nom:', nomStation);
         
         // Positionner le curseur sur cette ligne
         await grist.setCursorPos({
@@ -75,18 +88,13 @@
         
       } catch (error) {
         statusEl.className = 'error';
-        statusEl.textContent = `❌ Erreur : ${error.message}`;
-        console.error('Erreur détaillée:', error);
+        statusEl.innerHTML = `❌ Erreur<br><small>${error.message}</small>`;
+        console.error('Erreur complète:', error);
       }
     }
     
-    // Attendre que Grist soit prêt
-    grist.onRecords(function(records) {
-      // Widget connecté
-    });
-    
-    // Lancer le filtre après un court délai
-    setTimeout(filterByCodeStation, 800);
+    // Attendre que tout soit prêt
+    setTimeout(filterByCodeStation, 1000);
   </script>
 </body>
 </html>
