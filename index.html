@@ -899,21 +899,14 @@ function renderKanbanBoard(){
 el.innerHTML = KANBAN_COLUMNS.map(col=>{
     let items = filtered.filter(a=>a.statut === col.statut);
     
-    // ── Tri des activités dans chaque colonne
+    // ── Tri chronologique par échéance (ou date de début si pas d'échéance)
     items.sort((a,b)=>{
-      // 1. Priorité haute en premier
-      if(a.priorite === 'Haute' && b.priorite !== 'Haute') return -1;
-      if(a.priorite !== 'Haute' && b.priorite === 'Haute') return 1;
-      
-      // 2. Puis par échéance (plus proche en premier)
-      const dateA = a.echeance || new Date('2099-12-31');
-      const dateB = b.echeance || new Date('2099-12-31');
-      const dateDiff = dateA - dateB;
-      if(dateDiff !== 0) return dateDiff;
-      
-      // 3. Enfin par ordre alphabétique du nom
-      return (a.activite||'').localeCompare(b.activite||'');
+      const dateA = a.echeance || a.dateDebut || new Date('2099-12-31');
+      const dateB = b.echeance || b.dateDebut || new Date('2099-12-31');
+      return dateB - dateA;
     });
+    
+    // Pour "Terminé" avec masquage : déjà slicé dans getFilteredAct
     
     // Pour "Terminé" avec masquage : déjà slicé dans getFilteredAct
     const totalInCol = kanbanAct.filter(a=>a.statut===col.statut).length;
