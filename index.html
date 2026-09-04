@@ -896,8 +896,16 @@ function renderKanbanBoard(){
   const filtered = getFilteredAct();
   const NOW = new Date();
 
-  el.innerHTML = KANBAN_COLUMNS.map(col=>{
+el.innerHTML = KANBAN_COLUMNS.map(col=>{
     let items = filtered.filter(a=>a.statut === col.statut);
+    
+    // ── Tri chronologique par échéance (ou date de début si pas d'échéance)
+    items.sort((a,b)=>{
+      const dateA = a.echeance || a.dateDebut || new Date('2099-12-31');
+      const dateB = b.echeance || b.dateDebut || new Date('2099-12-31');
+      return dateA - dateB;
+    });
+    
     // Pour "Terminé" avec masquage : déjà slicé dans getFilteredAct
     const totalInCol = kanbanAct.filter(a=>a.statut===col.statut).length;
     const hiddenCount = totalInCol - items.length;
