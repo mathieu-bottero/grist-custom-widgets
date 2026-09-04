@@ -1330,11 +1330,13 @@ content.innerHTML = `
 }
 
 function drawGantt(){
-  // ── Période affichée : mois courant + offset, étalé sur ~2 mois glissants
-  const NOW     = new Date();
-  const anchor  = new Date(NOW.getFullYear(), NOW.getMonth() + planningOffset, 1);
-  const viewStart = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
-  const viewEnd = new Date(anchor.getFullYear(), anchor.getMonth() + planningDepth, 0);
+  // ── Période affichée : mois passés + mois en cours + 1 mois futur
+  const NOW = new Date();
+  const anchor = new Date(NOW.getFullYear(), NOW.getMonth() + planningOffset, 1);
+  
+  // Calculer le début : planningDepth - 1 mois dans le passé (pour garder 1 mois futur)
+  const viewStart = new Date(anchor.getFullYear(), anchor.getMonth() - (planningDepth - 1), 1);
+  const viewEnd = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0); // Fin du mois suivant
 
   // Label période
   const monthFmt = new Intl.DateTimeFormat('fr-FR', {month:'long', year:'numeric'});
