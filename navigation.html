@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+      margin-bottom: 15px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #message {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    #suggestions {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      display: none;
+      background: white;
+    }
+    .suggestion {
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .suggestion:hover {
+      background: #f5f5f5;
+    }
+    .suggestion:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🔍 Rechercher une station</h2>
+    <input 
+      type="text" 
+      id="codeInput" 
+      placeholder="Entrez le code de la station (ex: K320331001)"
+      autocomplete="off"
+    >
+    <div id="suggestions"></div>
+    <button id="searchBtn">Rechercher</button>
+    <div id="message"></div>
+  </div>
+  
+  <script>
+    let stationsData = null;
+    
+    grist.ready();
+    
+    // Charger les données au démarrage
+    async function loadStations() {
+      try {
+        stationsData = await grist.docApi.fetchTable('stations');
+        console.log('Données chargées:', stationsData);
+        showMessage('Prêt ! ' + stationsData.id.length + ' stations disponibles', 'info');
+      } catch (error) {
+        showMessage('Erreur de chargement: ' + error.message, 'error');
+        console.error(error);
+      }
+    }
+    
+    // Fonction de recherche
+    async function searchStation() {
+      const code = document.getElementById('codeInput').value.trim();
+      
+      if (!code) {
+        showMessage('Veuillez entrer un code de station', 'error');
+        return;
+      }
+      
+      if (!stationsData) {
+        showMessage('Données en cours de chargement...', 'info');
+        return;
+      }
+      
+      showMessage('Recherche en cours...', 'info');
+      document.getElementById('searchBtn').disabled = true;
+      
+      try {
+        // Chercher la station
+        const index = stationsData.code_station.findIndex(
+          c => c && c.toLowerCase() === code.toLowerCase()
+        );
+        
+        if (index === -1) {
+          showMessage('❌ Station non trouvée: ' + code, 'error');
+          document.getElementById('searchBtn').disabled = false;
+          return;
+        }
+        
+        const rowId = stationsData.id[index];
+        const nomStation = stationsData.nom_station_hydro[index];
+        
+        // Navigation vers la fiche
+        await grist.setCursorPos({
+          rowId: rowId
+        });
+        
+        showMessage('✅ Station trouvée: ' + nomStation + ' (' + code + ')', 'success');
+        
+        // Réinitialiser après 2 secondes
+        setTimeout(() => {
+          document.getElementById('codeInput').value = '';
+          document.getElementById('message').style.display = 'none';
+          document.getElementById('searchBtn').disabled = false;
+        }, 2000);
+        
+      } catch (error) {
+        showMessage('❌ Erreur: ' + error.message, 'error');
+        document.getElementById('searchBtn').disabled = false;
+        console.error(error);
+      }
+    }
+    
+    // Autocomplétion
+    function showSuggestions() {
+      const input = document.getElementById('codeInput').value.toLowerCase();
+      const suggestionsDiv = document.getElementById('suggestions');
+      
+      if (!input || !stationsData) {
+        suggestionsDiv.style.display = 'none';
+        return;
+      }
+      
+      // Chercher les correspondances
+      const matches = [];
+      for (let i = 0; i < stationsData.code_station.length; i++) {
+        const code = stationsData.code_station[i];
+        if (code && code.toLowerCase().includes(input)) {
+          matches.push({
+            code: code,
+            nom: stationsData.nom_station_hydro[i],
+            nomCourt: stationsData.nom_court[i]
+          });
+          if (matches.length >= 10) break; // Limiter à 10 résultats
+        }
+      }
+      
+      if (matches.length === 0) {
+        suggestionsDiv.style.display = 'none';
+        return;
+      }
+      
+      // Afficher les suggestions
+      suggestionsDiv.innerHTML = matches.map(m => 
+        `<div class="suggestion" onclick="selectSuggestion('${m.code}')">
+          <strong>${m.code}</strong> - ${m.nomCourt || m.nom}
+        </div>`
+      ).join('');
+      suggestionsDiv.style.display = 'block';
+    }
+    
+    function selectSuggestion(code) {
+      document.getElementById('codeInput').value = code;
+      document.getElementById('suggestions').style.display = 'none';
+      searchStation();
+    }
+    
+    function showMessage(text, type) {
+      const msgDiv = document.getElementById('message');
+      msgDiv.textContent = text;
+      msgDiv.className = type;
+      msgDiv.style.display = 'block';
+    }
+    
+    // Event listeners
+    document.getElementById('searchBtn').addEventListener('click', searchStation);
+    document.getElementById('codeInput').addEventListener('keyup', function(e) {
+      if (e.key === 'Enter') {
+        searchStation();
+      } else {
+        showSuggestions();
+      }
+    });
+    
+    // Charger au démarrage
+    loadStations();
+  </script>
+</body>
+</html>
